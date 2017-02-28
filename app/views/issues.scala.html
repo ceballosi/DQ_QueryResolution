@@ -1,0 +1,30 @@
+@import domain._
+
+@(issueList: List[LoggedIssue])
+@*
+* Call the `main` with arguments. The first
+* argument is a `String` with the title of the page, the second
+* argument is an `Html` object containing the body of the page.
+*@
+
+@*
+JUST A SIMPLE VIEW AS PART OF WORKFLOW DEFINITION
+*@
+@main("Issue Resolution System") {
+    <div>
+        <table>
+        @for(issue <- issueList) {
+            <tr>
+                <td>@issue.status</td>
+                <td>@issue.id</td>
+                <td>@issue.loggedBy</td>
+                <td>@issue.dateLogged</td>
+                <td>@issue.issueOrigin</td>
+                <td>@issue.GMC</td>
+                <td>@issue.description</td>
+                <td>@issue.familyId</td>
+            </tr>
+        }
+        </table>
+    </div>
+}
