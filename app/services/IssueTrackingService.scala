@@ -1,22 +1,22 @@
 package services
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{ Inject, Singleton }
 
 import domain._
 import java.util.Date
 
 import dao.IssueTrackingDao
 
-
 trait IssueTrackingService {
-  def allIssues : List[LoggedIssue]
+  def allIssues: List[LoggedIssue]
 }
 
 @Singleton
-class IssueTrackingServiceImpl @Inject() (issueTrackingDao : IssueTrackingDao) extends IssueTrackingService {
+class IssueTrackingServiceImpl @Inject() (issueTrackingDao: IssueTrackingDao) extends IssueTrackingService {
 
-  def allIssues : List[LoggedIssue] = {
-    List(LoggedIssue(Open,
+  def allIssues: List[LoggedIssue] = {
+    List(LoggedIssue(
+      Open,
       "RYJ-Orp-031",
       "RJ",
       new Date(),
@@ -34,9 +34,8 @@ class IssueTrackingServiceImpl @Inject() (issueTrackingDao : IssueTrackingDao) e
       None,
       None,
       None,
-      Some("Comments on issue"))
-    )
+      Some("Comments on issue")
+    ))
   }
-
 
 }
