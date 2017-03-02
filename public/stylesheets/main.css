@@ -1,0 +1,100 @@
+html {
+  height: 100%;
+}
+
+/*html body {*/
+  /*height: 100%;*/
+  /*overflow: hidden;*/
+  /*display: flex;*/
+  /*flex-direction: column;*/
+/*}*/
+
+/*html body .container-fluid.body-content {*/
+  /*width: 100%;*/
+  /*overflow-y: auto;*/
+  /*margin-top: 20px;*/
+/*}*/
+
+
+header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 55px;
+    }
+nav {
+        position: absolute;
+        top: 55px;
+        left: 0;
+        width: 100px;
+        bottom: 0;
+        margin-top: 20px;
+        box-sizing: border-box;
+    }
+
+section {
+        position: absolute;
+        top: 55px;
+        left: 140px;
+        right: 0;
+        bottom: 0;
+        margin-top: 20px;
+    }
+
+header {
+    background-color: #a0c0d8;
+    /*background-color: #dddddd;*/
+    width: 100%;
+}
+
+footer {
+    background-color: #4C4;
+    min-height: 30px;
+    width: 100%;
+}
+
+.table-striped > tbody > tr:nth-of-type(2n+1) {
+    background-color: rgba(171, 205, 231, 0.32);
+    /*background-color: #a0c0d8;*/
+    /*background-color: #efefef;*/
+}
+.thead-default {
+    background-color: #a9c2d8;
+    /*background-color: #dddddd;*/
+}
+
+.h3, h3 {
+    width: 200px;
+}
+
+.appName {
+    width: 100%;
+    align-content: space-around;
+    text-align: justify;
+    color: #fbfbfb;
+    display: inline;
+}
+a {
+    /*color: #a0c0d8;*/
+    /*color: #FDEEE4;*/
+    /*color: #96b3ca;*/
+}
+
+.cursorPointer {
+	cursor: pointer;
+}
+
+.remove-button {
+    color: #c50909;
+    padding-left: 27px;
+}
+
+.edit-button {
+    color: #035C04;
+    padding-left: 27px;
+}
+
+.noneDisplay {
+    display: none;
+}
