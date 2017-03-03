@@ -19,4 +19,10 @@ class HomeController @Inject()(issueTracking: IssueTrackingService)(implicit ec:
     issueTracking.allIssues.map(issues => Ok(views.html.issues(issues)))
   }
 
+  //TODO : To be removed (Just a temporary method to create a table using model)
+  def tmpMethod = Action.async { implicit req =>
+    issueTracking.tmpMethod.map(_ =>
+      Redirect(routes.HomeController.listIssues))
+  }
+
 }

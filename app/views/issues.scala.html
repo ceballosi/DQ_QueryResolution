@@ -1,6 +1,6 @@
 @import domain._
 
-@(issueList: List[LoggedIssue])
+@(issueList: Seq[LoggedIssue])
 @*
 * Call the `main` with arguments. The first
 * argument is a `String` with the title of the page, the second
@@ -23,7 +23,7 @@ JUST A SIMPLE VIEW AS PART OF WORKFLOW DEFINITION
             @*<thead >*@
                 <tr>
                     <th > Status </th>
-                    <th > Id </th>
+                    <th > Issue Id </th>
                     <th > Logged By </th>
                     <th > Date Logged </th>
                     <th > Issue Origin </th>
@@ -36,7 +36,7 @@ JUST A SIMPLE VIEW AS PART OF WORKFLOW DEFINITION
             @for(issue <- issueList) {
                 <tr>
                     <td>@issue.status</td>
-                    <td>@issue.id</td>
+                    <td>@issue.issueId</td>
                     <td>@issue.loggedBy</td>
                     <td>@issue.dateLogged</td>
                     <td>@issue.issueOrigin</td>
