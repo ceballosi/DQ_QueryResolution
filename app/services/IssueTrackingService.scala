@@ -20,7 +20,8 @@ trait IssueTrackingService {
 @Singleton
 class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(implicit ec: ExecutionContext) extends IssueTrackingService {
 
-  def allIssues: Future[List[LoggedIssue]] = {
+  def allIssues: Future[Seq[LoggedIssue]] = issueTrackingDao.findAll
+  /*{
     Future {
       var issues: List[LoggedIssue] = findAllIssues
       for(x <- 1 to 5){
@@ -28,7 +29,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
       }
       issues
     }
-  }
+  } */
 
   def allIssuesNow: List[LoggedIssue] = {
     var issues: List[LoggedIssue] = findAllIssues
