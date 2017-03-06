@@ -12,7 +12,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 trait IssueTrackingService {
   def allIssues: Future[Seq[LoggedIssue]]
-
+  def allIssuesNow: List[LoggedIssue]
   //TODO : To be removed (temporary method to create a table and populate data)
   def tmpMethod: Future[Unit]
 }
@@ -20,8 +20,27 @@ trait IssueTrackingService {
 @Singleton
 class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(implicit ec: ExecutionContext) extends IssueTrackingService {
 
-  def allIssues = issueTrackingDao.findAll
+  def allIssues: Future[List[LoggedIssue]] = {
+    Future {
+      var issues: List[LoggedIssue] = findAllIssues
+      for(x <- 1 to 5){
+        issues = issues ::: issues
+      }
+      issues
+    }
+  }
 
+  def allIssuesNow: List[LoggedIssue] = {
+    var issues: List[LoggedIssue] = findAllIssues
+    for(x <- 1 to 5){
+      issues = issues ::: issues
+    }
+    issues
+  }
+
+  def findAllIssues: List[LoggedIssue] = {
+    tmpPopulateIssues
+  }
 
   //TODO : To be removed (temporary method to provide a handler to the controller for creating a table using sample model)
   def tmpMethod = Future {
@@ -66,7 +85,6 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
       None,
       None,
       Some("Comments on issue")
-
     )
 
     val issueLs = ListBuffer(data)

@@ -100,7 +100,7 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
     override def * : ProvenShape[LoggedIssue] = (id, IssueId, status, loggedBy, dateLogged, issueOrigin, GMC, urgent,
       familyId, patientId, dataItem, description, fileReference, dateSent, weeksOpen, escalation, dueForEscalation,
-      resolution, resolutionDate, comments) <>(LoggedIssue.tupled, LoggedIssue.unapply)
+      resolution, resolutionDate, comments) <>((LoggedIssue.apply _).tupled, LoggedIssue.unapply)
 
 
     // Custom column mapping
