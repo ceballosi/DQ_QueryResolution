@@ -6,5 +6,8 @@
 GET     /                                                   controllers.HomeController.listIssues
 GET     /tmp/create/db                                      controllers.HomeController.tmpMethod
 
+GET     /container                  controllers.HomeController.container
+GET     /list                       controllers.HomeController.listAjax
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

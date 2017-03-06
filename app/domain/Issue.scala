@@ -1,6 +1,7 @@
 package domain
 
 import java.util.Date
+import play.api.libs.json._
 
 case class LoggedIssue(
                         id : Long,
@@ -25,6 +26,34 @@ case class LoggedIssue(
                         comments: Option[String]
                       )
 
+object LoggedIssue {
+
+  implicit val loggedIssueWrites = new Writes[LoggedIssue] {
+    def writes(c: LoggedIssue): JsValue = {
+      Json.obj(
+        "status" -> c.status.toString,
+        "DT_RowId" -> Json.toJson(c.issueId),
+        "loggedBy" -> Json.toJson(c.loggedBy),
+        "dateLogged" -> c.dateLogged.toString,
+        "issueOrigin" -> Json.toJson(c.issueOrigin),
+        "GMC" -> Json.toJson(c.GMC),
+        "urgent" -> Json.toJson(c.urgent),
+        "familyId" -> Json.toJson(c.familyId),
+        "patientId" -> Json.toJson(c.patientId),
+        "dataItem" -> Json.toJson(c.dataItem),
+        "description" -> Json.toJson(c.description),
+        "fileReference" -> Json.toJson(c.fileReference),
+        "dateSent" -> Json.toJson(c.dateSent),
+        "weeksOpen" -> Json.toJson(c.weeksOpen),
+        "escalation" -> Json.toJson(c.escalation),
+        "dueForEscalation" -> Json.toJson(c.dueForEscalation),
+        "resolution" -> Json.toJson(c.resolution),
+        "resolutionDate" -> Json.toJson(c.resolutionDate),
+        "comments" -> Json.toJson(c.comments)
+      )
+    }
+  }
+}
 
 trait Status
 
