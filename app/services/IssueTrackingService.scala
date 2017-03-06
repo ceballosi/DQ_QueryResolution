@@ -1,12 +1,13 @@
 package services
 
+import java.time.{LocalDate, ZoneId}
 import java.util.Date
 import javax.inject.{Inject, Singleton}
 
 import dao.IssueTrackingDao
 import domain._
-import org.joda.time.LocalDateTime
 
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ExecutionContext, Future}
 
 trait IssueTrackingService {
@@ -29,14 +30,27 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
 
   //TODO : To be removed
   private def tmpPopulateIssues = {
-    val r = scala.util.Random
-    var issues = List(LoggedIssue(
+    import java.time.temporal.ChronoUnit.DAYS
+
+    import scala.util.Random
+
+    val r = new Random
+    val statuses = Status.validStatuses
+    val gmcList = List("RGT", "RJ1", "RRK", "RTD", "RP4", "REP", "RW3", "RTD", "RP4")
+    val issueOrigin = List("ServiceDesk", "DataQuality", "RedTeam", "Informatics", "BioInformatics")
+    val loggedBy = List("RJ", "JS", "DA")
+
+    def randomDateBetween(from: LocalDate, to: LocalDate) = {
+      val d = from.plusDays(r.nextInt(DAYS.between(from, to).toInt))
+      Date.from(d.atStartOfDay(ZoneId.systemDefault()).toInstant())
+    }
+
+    val data = LoggedIssue(
       1,
       "RYJ-Orp-031",
-      Open,
-
+      statuses(r.nextInt(statuses.length)),
       "RJ",
-      new Date(),
+      randomDateBetween(LocalDate.of(2017, 1, 1), LocalDate.of(2017, 3, 1)),
       "DataQuality",
       "RYJ",
       None,
@@ -52,97 +66,24 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
       None,
       None,
       Some("Comments on issue")
-    ), LoggedIssue(
-      2,
-      "RYJ-Orp-032",
-      Close,
-      "RJ",
-      new LocalDateTime().minusDays(10).toDate,
-      "DataQuality",
-      "RYJ",
-      None,
-      "110110124",
-      None,
-      Some("Group size"),
-      "Issue with family group size: Please see 'Group Issues' tab for more details and potential resolutions",
-      None,
-      None,
-      None,
-      None,
-      None,
-      None,
-      None,
-      Some("Comments on issue")
-    ), LoggedIssue(
-      3,
-      "RYJ-Orp-033",
-      Open,
 
-      "RJ",
-      new LocalDateTime().minusDays(4).toDate,
-      "DataQuality",
-      "RYJ",
-      None,
-      "110100125",
-      None,
-      Some("Group size"),
-      "Issue with family group size: Please see 'Group Issues' tab for more details and potential resolutions",
-      None,
-      None,
-      None,
-      None,
-      None,
-      None,
-      None,
-      Some("Comments on issue")
-    ), LoggedIssue(
-      4,
-      "RYJ-Orp-034",
-      Open,
+    )
 
-      "RJ",
-      new LocalDateTime().minusDays(20).toDate,
-      "DataQuality",
-      "RYJ",
-      None,
-      "110020126",
-      None,
-      Some("Group size"),
-      "Issue with family group size: Please see 'Group Issues' tab for more details and potential resolutions",
-      None,
-      None,
-      None,
-      None,
-      None,
-      None,
-      None,
-      Some("Comments on issue")
-    ), LoggedIssue(
-      5,
-      "RYJ-Orp-035",
-      Open,
-      "RJ",
-      new LocalDateTime().minusDays(110).toDate,
-      "DataQuality",
-      "RYJ",
-      None,
-      "110920127",
-      None,
-      Some("Group size"),
-      "Issue with family group size: Please see 'Group Issues' tab for more details and potential resolutions",
-      None,
-      None,
-      None,
-      None,
-      None,
-      None,
-      None,
-      Some("Comments on issue")
-    ))
+    val issueLs = ListBuffer(data)
 
-    for (x <- 1 to 5) {
-      issues = issues ::: issues
+    data.copy(status = statuses(r.nextInt(statuses.length)))
+    (1 to 5000).foreach { x =>
+      val c = data.copy(
+        issueId = "RYJ-Orp-031" + r.nextInt(500),
+        loggedBy = loggedBy(r.nextInt(loggedBy.length)),
+        status = statuses(r.nextInt(statuses.length)),
+        GMC = gmcList(r.nextInt(gmcList.length)),
+        dateLogged = randomDateBetween(LocalDate.of(2016, 12, 1), LocalDate.of(2017, 2, 1)),
+        issueOrigin = issueOrigin(r.nextInt(issueOrigin.length)),
+        dateSent = Some(randomDateBetween(LocalDate.of(2017, 2, 1), LocalDate.of(2017, 3, 1))
+        ))
+      issueLs += c
     }
-    issues
+    issueLs.toList
   }
 }
