@@ -5,6 +5,7 @@ import javax.inject.{Inject, Singleton}
 
 import dao.Paging.PageResult
 import domain._
+import DaoUtils._
 import play.api.db.slick.DatabaseConfigProvider
 import slick.driver.JdbcProfile
 import slick.lifted.ProvenShape
@@ -12,10 +13,10 @@ import slick.lifted.ProvenShape
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 trait IssueTrackingDao extends BaseDao[LoggedIssue, Long] {
+  def findByCriteria(cr : SearchCriteria): Future[Seq[LoggedIssue]]
   // TODO To be removed
   def tableSetup(data: Seq[LoggedIssue])
 }
-
 
 /**
   * @param dbConfigProvider Play db config provider. Play injects this
@@ -35,6 +36,17 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
   private val loggedIssues = toTable
 
+  // Custom column mapping
+  implicit val statusMapper = MappedColumnType.base[Status, String](
+    d => d.toString, d => Status.validStatuses.find(_.toString == d).getOrElse(InvalidStatus)
+  )
+
+  implicit val dateMapper = MappedColumnType.base[java.util.Date, java.sql.Timestamp](
+    d => new java.sql.Timestamp(d.getTime),
+    d => new java.util.Date(d.getTime)
+  )
+
+
   // TODO: To be removed
   def tableSetup(data: Seq[LoggedIssue]) = {
     val g = db.run(DBIO.seq(
@@ -47,8 +59,20 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     Await.result(g, 10 seconds)
   }
 
-
   def findAll: Future[Seq[LoggedIssue]] = db.run(loggedIssues.result)
+
+  def findByCriteria(cr : SearchCriteria): Future[Seq[LoggedIssue]] = {
+    val q = MaybeFilter(loggedIssues)
+      .filter(cr.gmc)(v => d => d.GMC === v) // v => parameter value passed in  d=> Table data element
+      .filter(cr.issueId)(v => d => d.IssueId === v)
+      .filter(cr.issueStatus)(v => d => d.status === v)
+      .filter(cr.urgent)(v => d => d.urgent === v)
+      .filter(cr.issueOrigin)(v => d => d.issueOrigin === v)
+      .filter(cr.resolutionDate)(v => d => d.resolutionDate === v)
+      .filter(cr.patientId)(v => d => d.patientId === v)
+      .query
+    db.run(q.result)
+  }
 
   def update(o: LoggedIssue): Future[Unit] = ???
 
@@ -125,15 +149,6 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
       resolution, resolutionDate, comments) <>((LoggedIssue.apply _).tupled, LoggedIssue.unapply)
 
 
-    // Custom column mapping
-    implicit val statusMapper = MappedColumnType.base[Status, String](
-      d => d.toString, d => Status.validStatuses.find(_.toString == d).getOrElse(InvalidStatus)
-    )
-
-    implicit val dateMapper = MappedColumnType.base[java.util.Date, java.sql.Timestamp](
-      d => new java.sql.Timestamp(d.getTime),
-      d => new java.util.Date(d.getTime)
-    )
   }
 
 }

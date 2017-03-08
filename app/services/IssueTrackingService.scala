@@ -15,8 +15,10 @@ trait IssueTrackingService {
   def allIssues: Future[Seq[LoggedIssue]]
   def allIssuesNow: List[LoggedIssue]
   def findByParam(offset: Int, pageSize: Int): Future[PageResult[LoggedIssue]]
+  def findByCriteria(cr : SearchCriteria): Future[Seq[LoggedIssue]]
   //TODO : To be removed (temporary method to create a table and populate data)
   def tmpMethod: Future[Unit]
+
 }
 
 @Singleton
@@ -27,15 +29,18 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
   }
 
   def allIssues: Future[Seq[LoggedIssue]] = issueTrackingDao.findAll
-  /*{
+   /*{
     Future {
       var issues: List[LoggedIssue] = findAllIssues
       for(x <- 1 to 5){
         issues = issues ::: issues
-      }
+  }
       issues
     }
   } */
+
+  def findByCriteria(searchCriteria : SearchCriteria): Future[Seq[LoggedIssue]] =
+    issueTrackingDao.findByCriteria(searchCriteria)
 
   def allIssuesNow: List[LoggedIssue] = {
     var issues: List[LoggedIssue] = findAllIssues

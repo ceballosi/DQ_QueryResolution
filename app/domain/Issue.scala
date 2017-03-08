@@ -67,4 +67,13 @@ object Status extends Status{
   def validStatuses = Vector(Open, Close)
 }
 
+case class SearchCriteria(gmc: Option[String] = None,
+                          issueId: Option[String] = None,
+                          issueStatus: Option[Status] = None,
+                          urgent: Option[Boolean] = None,
+                          issueOrigin: Option[String] = None,
+                          resolutionDate: Option[Date] = None,
+                          patientId: Option[String] = None
+                         )
+
 
