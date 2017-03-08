@@ -2,14 +2,14 @@ package controllers
 
 import javax.inject._
 
-import domain.{LoggedIssue, Open}
-import play.api.libs.json.{JsValue, Json}
+import dao.Paging.PageResult
+import domain.LoggedIssue
 import play.api.libs.json.Json._
-import play.api.libs.functional.syntax._
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc._
 import services.IssueTrackingService
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class HomeController @Inject()(issueTracking: IssueTrackingService)(implicit ec: ExecutionContext) extends Controller {
@@ -33,7 +33,7 @@ class HomeController @Inject()(issueTracking: IssueTrackingService)(implicit ec:
   // not async atm...
   def listAjax = Action { implicit req =>
     val drawReq: Option[String] = req.getQueryString("draw")
-    val draw = drawReq.get.toInt    //security
+    val draw = drawReq.get.toInt //security
 
     val recordsTotal: String = issueTracking.allIssuesNow.length.toString
     val issues: List[LoggedIssue] = issueTracking.allIssuesNow.take(10)
@@ -47,6 +47,29 @@ class HomeController @Inject()(issueTracking: IssueTrackingService)(implicit ec:
     )
     Ok(json)
   }
+
+
+  def listAjaxAsync = Action.async { implicit req =>
+
+    val draw = req.getQueryString("draw").get.toInt //security
+    val offset = req.getQueryString("start").get.toInt
+    val pageSize = req.getQueryString("length").get.toInt
+
+    val findResult: Future[PageResult[LoggedIssue]] = issueTracking.findByParam(offset, pageSize)
+
+    findResult.map {
+      pageResult => {
+        val json = Json.obj(
+          "draw" -> draw,
+          "recordsTotal" -> pageResult.total.toString,
+          "recordsFiltered" -> pageResult.total.toString,
+          "data" -> Json.toJson(pageResult.items)
+        )
+        Ok(json)
+      }
+    }
+  }
+
 
   def container = Action {
     Ok(views.html.container())

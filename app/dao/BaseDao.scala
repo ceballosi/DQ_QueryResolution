@@ -1,5 +1,7 @@
 package dao
 
+import dao.Paging.PageResult
+import domain.LoggedIssue
 import slick.lifted.TableQuery
 
 import scala.concurrent.Future
@@ -18,4 +20,6 @@ trait BaseDao[T, U] {
 
   // To get Table functional relational mapping (FRM) for the DAO
   def toTable: TableQuery[_]
+
+  def findByParam(offset: Int, pageSize: Int) : Future[PageResult[LoggedIssue]]
 }

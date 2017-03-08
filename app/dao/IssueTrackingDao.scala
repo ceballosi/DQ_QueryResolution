@@ -3,6 +3,7 @@ package dao
 import java.util.Date
 import javax.inject.{Inject, Singleton}
 
+import dao.Paging.PageResult
 import domain._
 import play.api.db.slick.DatabaseConfigProvider
 import slick.driver.JdbcProfile
@@ -39,7 +40,6 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     val g = db.run(DBIO.seq(
       // create the schema
       loggedIssues.schema.create,
-
       // to bulk insert our sample data
       loggedIssues ++= data
     ))
@@ -53,6 +53,28 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
   def update(o: LoggedIssue): Future[Unit] = ???
 
   def findById(id: Long): Future[Option[LoggedIssue]] = db.run(loggedIssues.filter(_.id === id).result.headOption)
+
+
+  def findByParam(offset: Int, pageSize: Int) : Future[PageResult[LoggedIssue]] = {
+
+    val issuesFuture = db.run(
+      loggedIssues.filter(_.loggedBy === "JS").drop(offset).take(pageSize).result
+    )
+    val filterIssuesCount: Future[Int] = db.run(
+      loggedIssues.filter(_.loggedBy === "JS").length.result
+    )
+
+
+    val eventualPageResult: Future[PageResult[LoggedIssue]] = filterIssuesCount.flatMap {
+      total => issuesFuture.map {
+        issues => {
+          PageResult(issues, total)
+        }
+      }
+    }
+    eventualPageResult
+
+  }
 
 
   /** **************  Table definition ***************/
