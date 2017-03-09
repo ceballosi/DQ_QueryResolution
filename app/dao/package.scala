@@ -1,14 +1,17 @@
+import domain.SearchCriteria
+
 package object dao {
 
 
-  object Paging {
+  object Searching {
 
-    case class PageReq(offset: Int = 1, // Default offset
-                       size: Int = 10, // DefaultPageSize
-                       sortFields: Option[List[String]] = None,
-                       sortDirections: Option[List[String]] = None)
+    case class SearchRequest(offset: Int = 1, // Default offset
+                             size: Int = 10, // DefaultPageSize
+                             searchCriteria: SearchCriteria,
+                             sortFields: Option[List[String]] = None,
+                             sortDirections: Option[List[String]] = None)
 
-    case class PageResult[T](items: Seq[T], total: Int)
+    case class SearchResult[T](items: Seq[T], total: Int)
 
   }
 

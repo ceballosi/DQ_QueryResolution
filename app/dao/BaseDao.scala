@@ -1,6 +1,6 @@
 package dao
 
-import dao.Paging.PageResult
+import dao.Searching.SearchResult
 import domain.LoggedIssue
 import slick.lifted.TableQuery
 
@@ -21,5 +21,5 @@ trait BaseDao[T, U] {
   // To get Table functional relational mapping (FRM) for the DAO
   def toTable: TableQuery[_]
 
-  def findByParam(offset: Int, pageSize: Int) : Future[PageResult[LoggedIssue]]
+  def findByParam(offset: Int, pageSize: Int) : Future[SearchResult[LoggedIssue]]
 }

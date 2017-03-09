@@ -5,7 +5,7 @@ import java.util.Date
 import javax.inject.{Inject, Singleton}
 
 import dao.IssueTrackingDao
-import dao.Paging.PageResult
+import dao.Searching.{SearchRequest, SearchResult}
 import domain._
 
 import scala.collection.mutable.ListBuffer
@@ -14,8 +14,9 @@ import scala.concurrent.{ExecutionContext, Future}
 trait IssueTrackingService {
   def allIssues: Future[Seq[LoggedIssue]]
   def allIssuesNow: List[LoggedIssue]
-  def findByParam(offset: Int, pageSize: Int): Future[PageResult[LoggedIssue]]
+  def findByParam(offset: Int, pageSize: Int): Future[SearchResult[LoggedIssue]]
   def findByCriteria(cr : SearchCriteria): Future[Seq[LoggedIssue]]
+  def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[LoggedIssue]]
   //TODO : To be removed (temporary method to create a table and populate data)
   def tmpMethod: Future[Unit]
 
@@ -24,9 +25,12 @@ trait IssueTrackingService {
 @Singleton
 class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(implicit ec: ExecutionContext) extends IssueTrackingService {
 
-  def findByParam(offset: Int, pageSize: Int) : Future[PageResult[LoggedIssue]] = {
+  def findByParam(offset: Int, pageSize: Int) : Future[SearchResult[LoggedIssue]] = {
     issueTrackingDao.findByParam(offset,pageSize)
   }
+
+  def findBySearchRequest(searchRequest: SearchRequest) : Future[SearchResult[LoggedIssue]] =  issueTrackingDao.findBySearchRequest(searchRequest)
+
 
   def allIssues: Future[Seq[LoggedIssue]] = issueTrackingDao.findAll
    /*{

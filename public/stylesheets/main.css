@@ -1,48 +1,48 @@
 html {
-  height: 100%;
+    height: 100%;
 }
 
 /* alternative approach - fix or remove RR*/
 
 /*html body {*/
-  /*height: 100%;*/
-  /*overflow: hidden;*/
-  /*display: flex;*/
-  /*flex-direction: column;*/
+/*height: 100%;*/
+/*overflow: hidden;*/
+/*display: flex;*/
+/*flex-direction: column;*/
 /*}*/
 
 /*html body .container-fluid.body-content {*/
-  /*width: 100%;*/
-  /*overflow-y: auto;*/
-  /*margin-top: 20px;*/
+/*width: 100%;*/
+/*overflow-y: auto;*/
+/*margin-top: 20px;*/
 /*}*/
 
-
 header {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 55px;
-    }
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 55px;
+}
+
 nav {
-        position: absolute;
-        top: 55px;
-        left: 0;
-        width: 100px;
-        bottom: 0;
-        margin-top: 20px;
-        box-sizing: border-box;
-    }
+    position: absolute;
+    top: 55px;
+    left: 0;
+    width: 100px;
+    bottom: 0;
+    margin-top: 20px;
+    box-sizing: border-box;
+}
 
 section {
-        position: absolute;
-        top: 55px;
-        left: 140px;
-        right: 0;
-        bottom: 0;
-        margin-top: 20px;
-    }
+    position: absolute;
+    top: 55px;
+    left: 140px;
+    right: 0;
+    bottom: 0;
+    margin-top: 20px;
+}
 
 header {
     background-color: #a9c2d8;
@@ -58,8 +58,13 @@ footer {
 .table-striped > tbody > tr:nth-of-type(2n+1) {
     background-color: #CDDFEE;
 }
+
 .thead-default {
     background-color: #a9c2d8;
+}
+
+.gmcs {
+    color: #337ab7;
 }
 
 /* this isn't doing it's job to centre the text - fix or remove RR*/
@@ -70,14 +75,15 @@ footer {
     color: #fbfbfb;
     display: inline;
 }
+
 /* this is NOT RECOMMENDED way of overriding bootstrap font size - fix and remove RR*/
 * {
-    font-size: 12px;
+    font-size: 11px;
     /*line-height: 2;*/
 }
 
 .cursorPointer {
-	cursor: pointer;
+    cursor: pointer;
 }
 
 .remove-button {
