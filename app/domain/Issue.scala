@@ -70,6 +70,7 @@ object Status extends Status{
 case class SearchCriteria(gmc: Option[String] = None,
                           issueId: Option[String] = None,
                           issueStatus: Option[Status] = None,
+                          loggedBy: Option[Boolean] = None,
                           urgent: Option[Boolean] = None,
                           issueOrigin: Option[String] = None,
                           dateLogged: Option[Date] = None,
