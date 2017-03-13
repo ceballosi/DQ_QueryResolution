@@ -37,7 +37,7 @@ $(document).ready(function () {
     });
 
     $("#newIssues").click(function (e) {
-        var url = "/list?filter=new&days=45";
+        var url = "/list?filter=new&days=45";   //should be last 30days by default
         filterTable(tableIssues, url, e);
     });
 
