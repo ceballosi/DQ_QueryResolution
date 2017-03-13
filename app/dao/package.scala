@@ -1,4 +1,4 @@
-import domain.SearchCriteria
+import domain. SearchCriteria
 
 package object dao {
 
@@ -13,7 +13,12 @@ package object dao {
 
     case class SearchResult[T](items: Seq[T], total: Int)
 
-  }
+    case class SearchRequest2(offset: Int = 1, // Default offset
+                             size: Int = 10, // DefaultPageSize
+                             searchCriteria: SearchCriteria,
+                              sortCriteria : Option[(String, String)] = None
+                             )
 
+  }
 
 }

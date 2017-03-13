@@ -4,16 +4,16 @@ import java.util.Date
 import javax.inject.{Inject, Singleton}
 
 import dao.DaoUtils._
-import dao.Searching.{SearchRequest, SearchResult}
+import dao.Searching.{SearchRequest, SearchRequest2, SearchResult}
 import domain._
 import play.api.db.slick.DatabaseConfigProvider
 import slick.driver.JdbcProfile
-import slick.lifted.ProvenShape
+import slick.lifted.{ColumnOrdered, ProvenShape}
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 trait IssueTrackingDao extends BaseDao[LoggedIssue, Long] {
-  def findBySearchRequest(pageRequest: SearchRequest): Future[SearchResult[LoggedIssue]]
+  def findBySearchRequest(pageRequest: SearchRequest2): Future[SearchResult[LoggedIssue]]
 
   def findByCriteria(cr : SearchCriteria): Future[Seq[LoggedIssue]]
   // TODO To be removed
@@ -48,6 +48,40 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     d => new java.util.Date(d.getTime)
   )
 
+  private val columnMap = Map(
+    "status" -> { (t: LoggedIssueTable) => t.status },
+    "DT_RowId" -> { (t: LoggedIssueTable) => t.issueId},
+    "loggedBy" -> { (t: LoggedIssueTable) => t.loggedBy},
+    "dateLogged" -> { (t: LoggedIssueTable) => t.dateLogged},
+    "issueOrigin" -> { (t: LoggedIssueTable) => t.issueOrigin},
+    "GMC" -> { (t: LoggedIssueTable) => t.GMC},
+    "description" -> { (t: LoggedIssueTable) => t.description},
+    "familyId" -> { (t: LoggedIssueTable) => t.familyId}
+  )
+
+
+  private def queryBySortCriteria(query: Query[LoggedIssueTable, LoggedIssueTable#TableElementType, Seq], sort: (String, String)) = {
+        val rep = columnMap.getOrElse(sort._1, throw new RuntimeException(s"Invalid column used for sorting ${sort._1}"))
+      val orderedRep = sort._2 match {
+        case "desc" => (t: LoggedIssueTable) => ColumnOrdered(rep(t), slick.ast.Ordering(slick.ast.Ordering.Desc))
+        case _ => (t: LoggedIssueTable) => ColumnOrdered(rep(t), slick.ast.Ordering(slick.ast.Ordering.Asc))
+      }
+      query.sortBy(orderedRep)
+
+  }
+
+  private def queryBySearchCriteria(cr : SearchCriteria)  = {
+    MaybeFilter(loggedIssues)
+      .filter(cr.gmc)(v => d => d.GMC === v) // v => parameter value passed in  d=> Table data element
+      .filter(cr.issueId)(v => d => d.issueId === v)
+      .filter(cr.issueStatus)(v => d => d.status === v)
+      .filter(cr.urgent)(v => d => d.urgent === v)
+      .filter(cr.issueOrigin)(v => d => d.issueOrigin === v)
+      .filter(cr.dateLogged)(v => d => d.dateLogged > v)
+      .filter(cr.patientId)(v => d => d.patientId === v)
+      .query
+  }
+
 
   // TODO: To be removed
   def tableSetup(data: Seq[LoggedIssue]) = {
@@ -64,51 +98,25 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
   def findAll: Future[Seq[LoggedIssue]] = db.run(loggedIssues.result)
 
   def findByCriteria(cr : SearchCriteria): Future[Seq[LoggedIssue]] = {
-    val q = MaybeFilter(loggedIssues)
-      .filter(cr.gmc)(v => d => d.GMC === v) // v => parameter value passed in  d=> Table data element
-      .filter(cr.issueId)(v => d => d.issueId === v)
-      .filter(cr.issueStatus)(v => d => d.status === v)
-      .filter(cr.urgent)(v => d => d.urgent === v)
-      .filter(cr.issueOrigin)(v => d => d.issueOrigin === v)
-      .filter(cr.dateLogged)(v => d => d.dateLogged > v)
-      .filter(cr.patientId)(v => d => d.patientId === v)
-      .query
-    db.run(q.result)
+    db.run(queryBySearchCriteria(cr).result)
   }
 
   def update(o: LoggedIssue): Future[Unit] = ???
 
   def findById(id: Long): Future[Option[LoggedIssue]] = db.run(loggedIssues.filter(_.id === id).result.headOption)
 
+  def findBySearchRequest(searchRequest: SearchRequest2): Future[SearchResult[LoggedIssue]] = {
+    var query = queryBySearchCriteria(searchRequest.searchCriteria)
 
-
-  def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[LoggedIssue]] = {
-    val cr: SearchCriteria = searchRequest.searchCriteria
-    val sortField = (searchRequest.sortFields.get)(0)
-    val sortDir = (searchRequest.sortDirections.get)(0)
-
-    val filterQuery = MaybeFilter(loggedIssues)
-      .filter(cr.gmc)(v => d => d.GMC === v) // v => parameter value passed in  d=> Table data element
-      .filter(cr.issueId)(v => d => d.issueId === v)
-      .filter(cr.issueStatus)(v => d => d.status === v)
-      .filter(cr.urgent)(v => d => d.urgent === v)
-      .filter(cr.issueOrigin)(v => d => d.issueOrigin === v)
-      .filter(cr.dateLogged)(v => d => d.dateLogged > v)
-      .filter(cr.patientId)(v => d => d.patientId === v)
-      .query
-
-    //working
+    searchRequest.sortCriteria.foreach { field =>
+      query = queryBySortCriteria(query, (field._1, field._2))
+    }
     val issuesFuture = db.run(
-      filterQuery.sortBy(_.dateLogged.desc).drop(searchRequest.offset).take(searchRequest.size).result
+      query.drop(searchRequest.offset).take(searchRequest.size).result
     )
 
-//clean attempt using map - 2 issues to fix 1. status/date mapping 2. dynamically choose sort direction
-//    val issuesFuture = db.run(
-//      filterQuery.sortBy(_.columnMap(sortField)).drop(pageRequest.offset).take(pageRequest.size).result
-//    )
-
     val filterIssuesCount: Future[Int] = db.run(
-      filterQuery.length.result
+      query.length.result
     )
 
     val eventualPageResult: Future[SearchResult[LoggedIssue]] = filterIssuesCount.flatMap {
@@ -192,7 +200,9 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
       resolution, resolutionDate, comments) <>((LoggedIssue.apply _).tupled, LoggedIssue.unapply)
 
     //map matches subset of fields from page that can be sorted
-    def columnMap = Map("status" -> status, "DT_RowId" -> issueId, "loggedBy" -> loggedBy, "dateLogged" -> dateLogged, "issueOrigin" -> issueOrigin, "GMC" -> GMC, "description" -> description, "familyId" -> familyId)
+   // def columnMap = Map("status" -> status, "DT_RowId" -> issueId, "loggedBy" -> loggedBy, "dateLogged" -> dateLogged, "issueOrigin" -> issueOrigin, "GMC" -> GMC, "description" -> description, "familyId" -> familyId)
+
+
   }
 
 }
