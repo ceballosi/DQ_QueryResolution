@@ -9,18 +9,22 @@ JUST A SIMPLE VIEW AS PART OF WORKFLOW DEFINITION
 *@
 @main("Issue Resolution System") {
 
-    <table id="issuesTable" class="table table-striped table-bordered" cellspacing="0" >
+    <table id="issuesTable" class="table table-striped table-bordered order-column" cellspacing="0" >
         <thead class="thead-default">
             <tr>
-                <th > Status </th>
-                <th > Issue Id </th>
-                <th > Logged By </th>
-                <th > Date Logged </th>
-                <th > Issue Origin </th>
-                <th > GMC </th>
-                <th > Description </th>
-                <th > FamilyId </th>
+                <th>Select</th>
+                <th> Status </th>
+                <th> Issue Id </th>
+                <th> Logged By </th>
+                <th> Date Logged </th>
+                <th> Issue Origin </th>
+                <th> GMC </th>
+                <th> Description </th>
+                <th> PatientId </th>
             </tr>
         </thead>
     </table>
+
+    <button type="submit" id="submitButton" class="btn btn-default btn-success pull-right submitButton">Send</button>
+
 }

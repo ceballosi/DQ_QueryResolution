@@ -5,7 +5,7 @@ import java.util.Date
 import javax.inject.{Inject, Singleton}
 
 import dao.IssueTrackingDao
-import dao.Searching.{SearchRequest, SearchRequest2, SearchResult}
+import dao.Searching.{SearchRequest, SearchResult}
 import domain._
 
 import scala.collection.mutable.ListBuffer
@@ -14,11 +14,8 @@ import scala.concurrent.{ExecutionContext, Future}
 trait IssueTrackingService {
   def allIssues: Future[Seq[LoggedIssue]]
   def allIssuesNow: List[LoggedIssue]
-  def findByParam(offset: Int, pageSize: Int): Future[SearchResult[LoggedIssue]]
   def findByCriteria(cr : SearchCriteria): Future[Seq[LoggedIssue]]
   def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[LoggedIssue]]
-  //TODO : to be removed
-  def tmpFindBySearchRequest(searchRequest: SearchRequest2): Future[SearchResult[LoggedIssue]]
   //TODO : To be removed (temporary method to create a table and populate data)
   def tmpMethod: Future[Unit]
 
@@ -27,13 +24,7 @@ trait IssueTrackingService {
 @Singleton
 class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(implicit ec: ExecutionContext) extends IssueTrackingService {
 
-  def findByParam(offset: Int, pageSize: Int) : Future[SearchResult[LoggedIssue]] = {
-    issueTrackingDao.findByParam(offset,pageSize)
-  }
-
-  def findBySearchRequest(searchRequest: SearchRequest) : Future[SearchResult[LoggedIssue]] =  ??? //issueTrackingDao.findBySearchRequest(searchRequest)
-
-  def tmpFindBySearchRequest(searchRequest: SearchRequest2) : Future[SearchResult[LoggedIssue]] =  issueTrackingDao.findBySearchRequest(searchRequest)
+  def findBySearchRequest(searchRequest: SearchRequest) : Future[SearchResult[LoggedIssue]] =  issueTrackingDao.findBySearchRequest(searchRequest)
 
 
   def allIssues: Future[Seq[LoggedIssue]] = issueTrackingDao.findAll
@@ -94,7 +85,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
       "RYJ",
       None,
       "110120123",
-      None,
+      Some((r.nextInt(1000) + 110000000).toString),
       Some("Group size"),
       "Issue with family group size: Please see 'Group Issues' tab for more details and potential resolutions",
       None,
@@ -110,12 +101,13 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
     val issueLs = ListBuffer(data)
 
     data.copy(status = statuses(r.nextInt(statuses.length)))
-    (1 to 5000).foreach { x =>
+    (1 to 10000).foreach { x =>
       val c = data.copy(
         issueId = "RYJ-Orp-031" + r.nextInt(500),
         loggedBy = loggedBy(r.nextInt(loggedBy.length)),
         status = statuses(r.nextInt(statuses.length)),
         GMC = gmcList(r.nextInt(gmcList.length)),
+        patientId = Some((r.nextInt(1000) + 110000000).toString),
         dateLogged = randomDateBetween(LocalDate.of(2016, 12, 1), LocalDate.of(2017, 2, 1)),
         issueOrigin = issueOrigin(r.nextInt(issueOrigin.length)),
         dateSent = Some(randomDateBetween(LocalDate.of(2017, 2, 1), LocalDate.of(2017, 3, 1))

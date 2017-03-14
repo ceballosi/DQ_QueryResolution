@@ -31,6 +31,7 @@ object LoggedIssue {
   implicit val loggedIssueWrites = new Writes[LoggedIssue] {
     def writes(c: LoggedIssue): JsValue = {
       Json.obj(
+        "select" -> "", //UI selection col
         "status" -> c.status.toString,
         "DT_RowId" -> Json.toJson(c.issueId),
         "loggedBy" -> Json.toJson(c.loggedBy),
@@ -73,7 +74,8 @@ case class SearchCriteria(gmc: Option[String] = None,
                           urgent: Option[Boolean] = None,
                           issueOrigin: Option[String] = None,
                           dateLogged: Option[Date] = None,
-                          patientId: Option[String] = None
+                          patientId: Option[String] = None,
+                          searchValue: Option[String] = None
                          )
 
 

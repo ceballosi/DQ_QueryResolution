@@ -82,6 +82,10 @@ footer {
     /*line-height: 2;*/
 }
 
+.submitButton{
+    background-color: #337ab7;
+    font-size: 12px;
+}
 .cursorPointer {
     cursor: pointer;
 }

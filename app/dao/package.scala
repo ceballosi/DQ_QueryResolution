@@ -9,16 +9,12 @@ package object dao {
                              size: Int = 10, // DefaultPageSize
                              searchCriteria: SearchCriteria,
                              uiRequestToken: Int = 0,
-                             sortFields: Option[List[String]] = None,
-                             sortDirections: Option[List[String]] = None)
+                             sortCriteria : Option[(String, String)] = None)
+    //this was the mechanism to support multiple sort cols, leaving here for the moment
+//                             sortFields: Option[List[String]] = None,
+//                             sortDirections: Option[List[String]] = None)
 
     case class SearchResult[T](items: Seq[T], total: Int)
-
-    case class SearchRequest2(offset: Int = 1, // Default offset
-                             size: Int = 10, // DefaultPageSize
-                             searchCriteria: SearchCriteria,
-                              sortCriteria : Option[(String, String)] = None
-                             )
 
   }
 

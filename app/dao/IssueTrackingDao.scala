@@ -4,7 +4,7 @@ import java.util.Date
 import javax.inject.{Inject, Singleton}
 
 import dao.DaoUtils._
-import dao.Searching.{SearchRequest, SearchRequest2, SearchResult}
+import dao.Searching.{SearchRequest, SearchResult}
 import domain._
 import play.api.db.slick.DatabaseConfigProvider
 import slick.driver.JdbcProfile
@@ -13,7 +13,7 @@ import slick.lifted.{ColumnOrdered, ProvenShape}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 trait IssueTrackingDao extends BaseDao[LoggedIssue, Long] {
-  def findBySearchRequest(pageRequest: SearchRequest2): Future[SearchResult[LoggedIssue]]
+  def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[LoggedIssue]]
 
   def findByCriteria(cr : SearchCriteria): Future[Seq[LoggedIssue]]
   // TODO To be removed
@@ -56,7 +56,8 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     "issueOrigin" -> { (t: LoggedIssueTable) => t.issueOrigin},
     "GMC" -> { (t: LoggedIssueTable) => t.GMC},
     "description" -> { (t: LoggedIssueTable) => t.description},
-    "familyId" -> { (t: LoggedIssueTable) => t.familyId}
+    "familyId" -> { (t: LoggedIssueTable) => t.familyId},
+    "patientId" -> { (t: LoggedIssueTable) => t.patientId}
   )
 
 
@@ -105,7 +106,9 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
   def findById(id: Long): Future[Option[LoggedIssue]] = db.run(loggedIssues.filter(_.id === id).result.headOption)
 
-  def findBySearchRequest(searchRequest: SearchRequest2): Future[SearchResult[LoggedIssue]] = {
+
+
+  def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[LoggedIssue]] = {
     var query = queryBySearchCriteria(searchRequest.searchCriteria)
 
     searchRequest.sortCriteria.foreach { field =>
@@ -129,27 +132,6 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     eventualPageResult
   }
 
-
-  def findByParam(offset: Int, pageSize: Int) : Future[SearchResult[LoggedIssue]] = {
-
-    val issuesFuture = db.run(
-      loggedIssues.filter(_.loggedBy === "JS").drop(offset).take(pageSize).result
-    )
-    val filterIssuesCount: Future[Int] = db.run(
-      loggedIssues.filter(_.loggedBy === "JS").length.result
-    )
-
-
-    val eventualPageResult: Future[SearchResult[LoggedIssue]] = filterIssuesCount.flatMap {
-      total => issuesFuture.map {
-        issues => {
-          SearchResult(issues, total)
-        }
-      }
-    }
-    eventualPageResult
-
-  }
 
 
   /** **************  Table definition ***************/
@@ -198,10 +180,6 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     override def * : ProvenShape[LoggedIssue] = (id, issueId, status, loggedBy, dateLogged, issueOrigin, GMC, urgent,
       familyId, patientId, dataItem, description, fileReference, dateSent, weeksOpen, escalation, dueForEscalation,
       resolution, resolutionDate, comments) <>((LoggedIssue.apply _).tupled, LoggedIssue.unapply)
-
-    //map matches subset of fields from page that can be sorted
-   // def columnMap = Map("status" -> status, "DT_RowId" -> issueId, "loggedBy" -> loggedBy, "dateLogged" -> dateLogged, "issueOrigin" -> issueOrigin, "GMC" -> GMC, "description" -> description, "familyId" -> familyId)
-
 
   }
 
