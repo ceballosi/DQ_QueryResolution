@@ -93,7 +93,7 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
       loggedIssues ++= data
     ))
     import scala.concurrent.duration._
-    Await.result(g, 10 seconds)
+    Await.result(g, 30 seconds)
   }
 
   def findAll: Future[Seq[LoggedIssue]] = db.run(loggedIssues.result)

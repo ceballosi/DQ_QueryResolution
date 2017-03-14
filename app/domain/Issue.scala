@@ -57,6 +57,8 @@ object LoggedIssue {
 }
 trait Status
 
+case object Draft extends Status
+
 case object Open extends Status
 
 case object Close extends Status
@@ -64,7 +66,7 @@ case object Close extends Status
 case object InvalidStatus extends Status
 
 object Status {
-  def validStatuses = Vector(Open, Close)
+  def validStatuses = Vector(Draft, Open, Close)
 }
 
 case class SearchCriteria(gmc: Option[String] = None,

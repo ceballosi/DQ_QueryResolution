@@ -103,7 +103,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
     data.copy(status = statuses(r.nextInt(statuses.length)))
     (1 to 10000).foreach { x =>
       val c = data.copy(
-        issueId = "RYJ-Orp-031" + r.nextInt(500),
+        issueId = "RYJ-Orp-" + "%05d".format(x),
         loggedBy = loggedBy(r.nextInt(loggedBy.length)),
         status = statuses(r.nextInt(statuses.length)),
         GMC = gmcList(r.nextInt(gmcList.length)),
