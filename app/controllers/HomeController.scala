@@ -5,15 +5,19 @@ import javax.inject._
 import dao.Searching.{SearchRequest, SearchResult}
 import UiUtils._
 import domain._
+import org.slf4j.{LoggerFactory, Logger}
 import play.api.libs.json.Json
 import play.api.libs.json.Json._
 import play.api.mvc._
 import services.{MailService, IssueTrackingService}
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 @Singleton
 class HomeController @Inject()(issueTracking: IssueTrackingService, mailService: MailService)(implicit ec: ExecutionContext) extends Controller {
+
+  val log: Logger = LoggerFactory.getLogger(this.getClass())
 
   /** Create an Action to render an HTML page with a welcome message.
     * The configuration in the `routes` file means that this method
@@ -57,11 +61,26 @@ class HomeController @Inject()(issueTracking: IssueTrackingService, mailService:
   }
 
 
-  def sendNotifications() = Action.async{ implicit req =>
+
+  def sendNotifications() = Action.async { implicit req =>
     val selected = param(req, "selectedIssues").get
-    println(s"yippee! selected issues=$selected")
-//    mailService.configureAndSend(selected)
-    mailService.send(selected)
-    Future(Ok(Json.toJson("should send selected notifications here")))
+    log.debug(s"selected issues=$selected")
+    val issueIds = selected.split(",").toList
+
+    val findResult: Future[SearchResult[LoggedIssue]] = issueTracking.findByIssueIds(issueIds)
+    var total: Int = 0
+    var selectedIssues: Seq[LoggedIssue] = null
+
+    findResult.onComplete{
+      case Success(searchResult) => {
+        total = searchResult.total
+        selectedIssues = searchResult.items
+        mailService.send(selectedIssues)
+
+      }
+      case Failure(e) => {e.printStackTrace}
+    }
+
+    Future(Ok(Json.toJson("sent email? or queued?")))
   }
 }

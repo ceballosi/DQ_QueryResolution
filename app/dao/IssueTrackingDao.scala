@@ -14,7 +14,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 
 trait IssueTrackingDao extends BaseDao[LoggedIssue, Long] {
   def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[LoggedIssue]]
-
+  def findByIssueIds(issueIds: List[String]): Future[SearchResult[LoggedIssue]]
   def findByCriteria(cr : SearchCriteria): Future[Seq[LoggedIssue]]
   // TODO To be removed
   def tableSetup(data: Seq[LoggedIssue])
@@ -105,6 +105,29 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
   def update(o: LoggedIssue): Future[Unit] = ???
 
   def findById(id: Long): Future[Option[LoggedIssue]] = db.run(loggedIssues.filter(_.id === id).result.headOption)
+
+
+  def findByIssueIds(issueIds: List[String]): Future[SearchResult[LoggedIssue]] = {
+
+    val query = loggedIssues.filter(_.issueId inSetBind issueIds ).sortBy(issue => (issue.dateLogged.desc,issue.GMC))
+
+    val issuesFuture = db.run(
+      query.result
+    )
+
+    val filterIssuesCount: Future[Int] = db.run(
+      query.length.result
+    )
+
+    val eventualPageResult: Future[SearchResult[LoggedIssue]] = filterIssuesCount.flatMap {
+      total => issuesFuture.map {
+        issues => {
+          SearchResult(issues, total)
+        }
+      }
+    }
+    eventualPageResult
+  }
 
 
 

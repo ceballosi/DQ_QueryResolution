@@ -75,7 +75,7 @@ object DatatablesRequestBuilder {
     //default to sort by dateLogged/desc
     val sortColFromUI = uiColumnNames(sortCol.getOrElse("3").toInt)
     val sortOrderFromUI = sortDir.getOrElse("desc")
-println(s"sortCol $sortCol sortDir $sortDir sortColFromUI $sortColFromUI  sortOrderFromUI $sortOrderFromUI")
+    log.info(s"sortCol=$sortCol sortDir=$sortDir sortColFromUI=$sortColFromUI sortOrderFromUI=$sortOrderFromUI")
 
     //this was the mechanism to support multiple sort cols, leaving here for the moment
 //    val sortFields: Option[List[String]] = Some(List(sortColFromUI))
