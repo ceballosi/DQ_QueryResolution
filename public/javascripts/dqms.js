@@ -58,6 +58,15 @@ function filterTable(tableIssues, url, e) {
     e.preventDefault();
 }
 
+function getParameterByName(name, url) {
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
 $(document).ready(function () {
     loadIssues();
     tableIssues = $('#issuesTable').DataTable();
@@ -68,7 +77,7 @@ $(document).ready(function () {
     });
 
     $("#newIssues").click(function (e) {
-        var url = "/list?filter=new&days=45";   //should be last 30days by default
+        var url = "/list?filter=new&days=30";   //should be last 30days by default
         filterTable(tableIssues, url, e);
     });
 
@@ -81,7 +90,38 @@ $(document).ready(function () {
         submitSelected(e);
     });
 
-    //tableIssues.buttons().container().appendTo( $('.col-sm-6:eq(0)', tableIssues.table().container() ) );
+
+    $("#export").click(function (e) {
+        var currentFilter = tableIssues.ajax.url();
+
+        var existingGmc = null;
+        var isNew = false;
+        var params = currentFilter.split("?")[1].split("&");
+        for(i=0;i<params.length;i++){
+            if(params[i].startsWith("gmc=")) {
+                existingGmc = params[i].substring( params[i].indexOf("=") + 1);
+            }
+            if(params[i].startsWith("filter=new")) {
+                isNew = true;
+            }
+        }
+
+        if(existingGmc) {
+            $(':hidden#filter').remove();
+            $(':hidden#days').remove();
+            $('#exportIssuesForm').append('<input type="hidden" id="gmc" name="gmc" value="" />');
+            $(':hidden#gmc').val(existingGmc);
+        }
+        if(isNew) {
+            $(':hidden#gmc').remove();
+            $('#exportIssuesForm').append('<input type="hidden" id="filter" name="filter" value="new" />');
+            $('#exportIssuesForm').append('<input type="hidden" id="days" name="days" value="45" />');
+        }
+
+        $(':hidden#length').val("60000");       //TODO not sure what limit if any should be applied
+
+    });
+
 });
 
 

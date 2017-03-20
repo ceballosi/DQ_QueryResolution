@@ -4,7 +4,7 @@ import java.util.Date
 
 import controllers.UiUtils._
 import dao.Searching.SearchRequest
-import domain.{Open, SearchCriteria}
+import domain.{Draft, SearchCriteria}
 import org.joda.time.LocalDate
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.mvc.{AnyContent, Request}
@@ -19,12 +19,14 @@ object DatatablesRequestBuilder {
   //needs to be kept in sync with ui
   private val uiColumnNames: List[String] = List("select/checkbox", "status", "DT_RowId", "loggedBy", "dateLogged", "issueOrigin", "GMC", "description", "patientId")
 
-  def build(request: Request[AnyContent]): SearchRequest = {
+  //support both get & post by taking the param map
+  def build(request: Map[String, Seq[String]]): SearchRequest = {
     //for security coerce these to int and provide safe fallbacks
-    val draw = request.getQueryString("draw").getOrElse("1").toInt
-    val offset = request.getQueryString("start").getOrElse("0").toInt
-    val pageSize = request.getQueryString("length").getOrElse("10").toInt
+    val draw = param(request,"draw").getOrElse("1").toInt
+    val offset = param(request,"start").getOrElse("0").toInt
+    val pageSize = param(request,"length").getOrElse("10").toInt
 
+    println(s"pageSize=$pageSize")
     val filter = param(request, "filter")
     val search = param(request, "search[value]")
     var isNew = false
@@ -56,7 +58,7 @@ object DatatablesRequestBuilder {
     if (isNew) {
       patientId = None
       gmc = None
-      issueStatus = Some(Open)
+      issueStatus = Some(Draft)
       val days = param(request, "days").getOrElse("0").toInt
       dateLogged = Some(LocalDate.now().minusDays(days).toDate)
     }
@@ -73,13 +75,10 @@ object DatatablesRequestBuilder {
     val sortDir = param(request, "order[0][dir]")
 
     //default to sort by dateLogged/desc
-    val sortColFromUI = uiColumnNames(sortCol.getOrElse("3").toInt)
+    val sortColFromUI = uiColumnNames(sortCol.getOrElse("4").toInt)
     val sortOrderFromUI = sortDir.getOrElse("desc")
     log.info(s"sortCol=$sortCol sortDir=$sortDir sortColFromUI=$sortColFromUI sortOrderFromUI=$sortOrderFromUI")
 
-    //this was the mechanism to support multiple sort cols, leaving here for the moment
-//    val sortFields: Option[List[String]] = Some(List(sortColFromUI))
-//    val sortDirections: Option[List[String]] = Some(List(sortOrderFromUI))
     val sortCriteria : Option[(String, String)] = Some((sortColFromUI,sortOrderFromUI))
     val searchCriteria = SearchCriteria(gmc, issueStatus = issueStatus, dateLogged = dateLogged, patientId = patientId)
 

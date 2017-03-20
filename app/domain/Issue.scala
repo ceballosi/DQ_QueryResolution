@@ -24,7 +24,12 @@ case class LoggedIssue(
                         resolution: Option[String],
                         resolutionDate: Option[Date],
                         comments: Option[String]
-                      )
+                      ) {
+  
+  def toCsvForUI(): String = {
+    this.issueId + "," + this.status + "," + this.loggedBy + "," + this.dateLogged + "," + this.issueOrigin + "," + this.GMC + "," + this.description + "," + this.patientId.getOrElse("")
+  }
+}
 
 object LoggedIssue {
 
@@ -54,7 +59,10 @@ object LoggedIssue {
       )
     }
   }
+
+  def csvHeaderForUI(): String = "IssueId,Status,LoggedBy,DateLogged,IssueOrigin,GMC,Description,PatientId"
 }
+
 trait Status
 
 case object Draft extends Status

@@ -25,6 +25,13 @@ JUST A SIMPLE VIEW AS PART OF WORKFLOW DEFINITION
         </thead>
     </table>
 
-    @*<button type="submit" id="submitButton" class="btn btn-default btn-success pull-right submitButton">Send</button>*@
+
+    <form name="exportIssuesForm" id="exportIssuesForm" method='get' action="/export">
+        <input type="hidden" id="length" name="length" value="1" />
+
+        <button type='submit' id="export" class="btn btn-default btn-success pull-left submitButton">Export filtered</button>
+    </form>
+
+    <button type="submit" id="submitButton" class="btn btn-default btn-success pull-right submitButton">Send</button>
 
 }

@@ -83,7 +83,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
       "RYJ-Orp-031",
       statuses(r.nextInt(statuses.length)),
       "RJ",
-      randomDateBetween(LocalDate.of(2017, 1, 1), LocalDate.of(2017, 3, 1)),
+      randomDateBetween(LocalDate.of(2017, 1, 1), LocalDate.of(2017, 3, 20)),
       "DataQuality",
       "RYJ",
       None,
@@ -111,9 +111,9 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
         status = statuses(r.nextInt(statuses.length)),
         GMC = gmcList(r.nextInt(gmcList.length)),
         patientId = Some((r.nextInt(1000) + 110000000).toString),
-        dateLogged = randomDateBetween(LocalDate.of(2016, 12, 1), LocalDate.of(2017, 2, 1)),
+        dateLogged = randomDateBetween(LocalDate.of(2016, 12, 1), LocalDate.of(2017, 3, 10)),
         issueOrigin = issueOrigin(r.nextInt(issueOrigin.length)),
-        dateSent = Some(randomDateBetween(LocalDate.of(2017, 2, 1), LocalDate.of(2017, 3, 1))
+        dateSent = Some(randomDateBetween(LocalDate.of(2017, 2, 1), LocalDate.of(2017, 3, 20))
         ))
       issueLs += c
     }

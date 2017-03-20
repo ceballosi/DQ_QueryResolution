@@ -2,14 +2,14 @@ package controllers
 
 import javax.inject._
 
+import controllers.UiUtils._
 import dao.Searching.{SearchRequest, SearchResult}
-import UiUtils._
 import domain._
-import org.slf4j.{LoggerFactory, Logger}
+import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.json.Json
 import play.api.libs.json.Json._
 import play.api.mvc._
-import services.{MailService, IssueTrackingService}
+import services.{IssueTrackingService, MailService}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -38,7 +38,7 @@ class HomeController @Inject()(issueTracking: IssueTrackingService, mailService:
 
   def listAjaxAsync = Action.async { implicit req =>
 
-    val searchRequest: SearchRequest = DatatablesRequestBuilder.build(req)
+    val searchRequest: SearchRequest = DatatablesRequestBuilder.build(req.queryString)
 
     val findResult: Future[SearchResult[LoggedIssue]] = issueTracking.findBySearchRequest(searchRequest)
 
@@ -83,4 +83,27 @@ class HomeController @Inject()(issueTracking: IssueTrackingService, mailService:
 
     Future(Ok(Json.toJson("sent email? or queued?")))
   }
+
+
+  def export = Action.async(parse.tolerantFormUrlEncoded) { implicit req =>
+
+    val searchRequest: SearchRequest = DatatablesRequestBuilder.build(req.queryString)
+
+    val findResult: Future[SearchResult[LoggedIssue]] = issueTracking.findBySearchRequest(searchRequest)
+
+    val csv = new StringBuilder(LoggedIssue.csvHeaderForUI + "\n")
+
+    findResult.map {
+      pageResult => {
+        pageResult.items.map(issue => csv ++= (issue.toCsvForUI + "\n"))
+
+        log.info(s"export returned ${pageResult.total} rows")
+
+        Ok(csv.toString()).as("text/csv").withHeaders(
+          CONTENT_DISPOSITION -> "attachment;filename=\"ExportedIssues.csv\"")
+      }
+    }
+  }
+
+
 }
