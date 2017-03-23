@@ -122,9 +122,7 @@ function importCsv(name) {
         contentType: false,
         processData: false,
         beforeSend: function (data) {
-            //$("#importFilename").text("File '" + name + "' will be imported into the database.");
-            //$("#importConfirm").modal('show');
-            alert('Are you sure you want to import new Issues from file? : ' + name);
+            $("#importConfirm").modal('hide');
         },
         success: function (data) {
             if (data.length == 0) {
@@ -158,7 +156,6 @@ $(function() {
             numFiles = input.get(0).files ? input.get(0).files.length : 1,
             label = input.val().replace(/\\/g, '/').replace(/.*\//, '');
         input.trigger('fileselect', [numFiles, label]);
-        //alert("attachment event")
     });
 
     // watch for custom `fileselect` event
@@ -171,9 +168,8 @@ $(function() {
             if( input.length ) {
                 input.val(selectedFile);
             }
-            //importConfirm();
-            $( "#importConfirm").show();
-            importCsv(selectedFile);
+            $("#importFilename").text("File '" + selectedFile + "' will be imported into the database.");
+            $("#importConfirm").modal('show');
         });
     });
 
@@ -209,11 +205,12 @@ $(document).ready(function () {
         exportCsv();
     });
 
-    $("#cancelImport").click(function (e) {
-        return false;
-    });
+
     $("#proceedImport").click(function (e) {
-        return true;
+        var selectedFile = $("#importFile").get(0).files[0].name;
+        if(selectedFile.length) {
+            importCsv(selectedFile);
+        }
     });
 
 });
