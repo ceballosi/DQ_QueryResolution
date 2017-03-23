@@ -1,5 +1,6 @@
 package services
 
+import java.io.File
 import java.time.{LocalDate, ZoneId}
 import java.util.Date
 import javax.inject.{Inject, Singleton}
@@ -7,9 +8,15 @@ import javax.inject.{Inject, Singleton}
 import dao.IssueTrackingDao
 import dao.Searching.{SearchRequest, SearchResult}
 import domain._
+import org.joda.time.format.ISODateTimeFormat
+import org.slf4j.{LoggerFactory, Logger}
+import purecsv.safe.converter.StringConverter
 
+import scala.collection.GenTraversableOnce
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ExecutionContext, Future}
+import scala.io.Source
+import scala.util.Try
 
 trait IssueTrackingService {
   def allIssues: Future[Seq[LoggedIssue]]
@@ -17,6 +24,7 @@ trait IssueTrackingService {
   def findByCriteria(cr : SearchCriteria): Future[Seq[LoggedIssue]]
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[LoggedIssue]]
   def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[LoggedIssue]]
+  def importFile(file: File): List[(Int, Throwable)]
   //TODO : To be removed (temporary method to create a table and populate data)
   def tmpMethod: Future[Unit]
 
@@ -24,6 +32,32 @@ trait IssueTrackingService {
 
 @Singleton
 class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(implicit ec: ExecutionContext) extends IssueTrackingService {
+
+  val log: Logger = LoggerFactory.getLogger(this.getClass())
+
+
+  //PureCSV custom Date converter
+  implicit val dateStringConverter = new StringConverter[Date] {
+    override def tryFrom(str: String): Try[Date] = {
+      Try(ISODateTimeFormat.dateTimeParser().parseDateTime(str).toDate)
+    }
+
+    override def to(date: Date): String = {
+      ISODateTimeFormat.dateTime().print(date.getTime)
+    }
+  }
+
+  //PureCSV custom Status converter
+  implicit val statusStringConverter = new StringConverter[Status] {
+    override def tryFrom(str: String): Try[Status] = {
+      Try(Status.validStatuses.find(_.toString == str).get)
+    }
+
+    override def to(status: Status): String = {
+      status.toString
+    }
+  }
+
 
   def findBySearchRequest(searchRequest: SearchRequest) : Future[SearchResult[LoggedIssue]] =  issueTrackingDao.findBySearchRequest(searchRequest)
 
@@ -55,6 +89,33 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
   def findAllIssues: List[LoggedIssue] = {
     tmpPopulateIssues
   }
+
+
+  def importFile(file: File): List[(Int, Throwable)] = {
+    val fileContent = Source.fromFile(file).mkString
+
+    import purecsv.safe._
+    import purecsv.safe.tryutil._
+
+    val result = CSVReader[LoggedIssue].readCSVFromString(fileContent)
+
+    val (successes, failures: List[(Int, Throwable)]) = result.getSuccessesAndFailures
+    if (failures.size > 0) {
+      log.error(s"Import File ${file.getName}, ${failures.length} FAILURES" )
+      failures.foreach(println)
+    }
+
+    if (successes.size > 0) {
+      log.error(s"Import File ${file.getName}, ${successes.length} successes" )
+      successes.foreach(println)
+    }
+
+    //TODO - get 2nd set of failures from import  into db ??
+    successes.map{ case (idx,issue) => issueTrackingDao.insert(issue)}
+    //return both sets of failures?
+    failures
+  }
+
 
   //TODO : To be removed (temporary method to provide a handler to the controller for creating a table using sample model)
   def tmpMethod = Future {

@@ -67,6 +67,120 @@ function getParameterByName(name, url) {
     return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
+function exportCsv() {
+    var currentFilter = tableIssues.ajax.url();
+
+    var existingGmc = null;
+    var isNew = false;
+    var allIssues = false;
+    var split = currentFilter.split("?");
+    if (split.length > 1) {
+        allIssues = false;
+
+        var params = split[1].split("&");
+        for (i = 0; i < params.length; i++) {
+            if (params[i].startsWith("gmc=")) {
+                existingGmc = params[i].substring(params[i].indexOf("=") + 1);
+            }
+            if (params[i].startsWith("filter=new")) {
+                isNew = true;
+            }
+        }
+    } else {
+        allIssues = true;
+    }
+
+    if (allIssues) {
+        $(':hidden#filter').remove();
+        $(':hidden#days').remove();
+        $(':hidden#gmc').remove();
+    }
+    if (existingGmc) {
+        $(':hidden#filter').remove();
+        $(':hidden#days').remove();
+        $('#exportIssuesForm').append('<input type="hidden" id="gmc" name="gmc" value="" />');
+        $(':hidden#gmc').val(existingGmc);
+    }
+    if (isNew) {
+        $(':hidden#gmc').remove();
+        $('#exportIssuesForm').append('<input type="hidden" id="filter" name="filter" value="new" />');
+        $('#exportIssuesForm').append('<input type="hidden" id="days" name="days" value="45" />');
+    }
+
+    $(':hidden#length').val("60000");       //TODO not sure what limit if any should be applied
+}
+
+
+function importCsv(name) {
+    var file = $('#importFile').get(0).files[0];
+    var formData = new FormData();
+    formData.append('file', file);
+    $.ajax({
+        url: '/upload',
+        data: formData,
+        type: 'POST',
+        contentType: false,
+        processData: false,
+        beforeSend: function (data) {
+            //$("#importFilename").text("File '" + name + "' will be imported into the database.");
+            //$("#importConfirm").modal('show');
+            alert('Are you sure you want to import new Issues from file? : ' + name);
+        },
+        success: function (data) {
+            if (data.length == 0) {
+                alert('Import completed successfully: ' + data);
+            } else {
+                var errorRows = "<tbody id='failuresTableBody'>";
+
+                for (var i = 0; i < data.length; i++) {
+                    errorRows += "<tr><td>" + data[i].rownum + "</td><td>" + data[i].error + "<td></tr>";
+                }
+                errorRows += "</tbody>";
+            }
+            $("#failuresTableBody").replaceWith(errorRows);
+            $("#importErrors").modal({ backdrop: 'static'});
+            $("#importErrors").modal('show');
+
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert("An unexpected error occurred, please see server logs:" + textStatus + ': ' + errorThrown);
+        }
+    });
+    return false;
+}
+
+
+//import event setup
+$(function() {
+    // attach `fileselect` event to all file inputs
+    $(document).on('change', ':file', function() {
+        var input = $(this),
+            numFiles = input.get(0).files ? input.get(0).files.length : 1,
+            label = input.val().replace(/\\/g, '/').replace(/.*\//, '');
+        input.trigger('fileselect', [numFiles, label]);
+        //alert("attachment event")
+    });
+
+    // watch for custom `fileselect` event
+    $(document).ready( function() {
+        $(':file').on('fileselect', function(event, numFiles, label) {
+
+            var input = $(this).parents('.input-group').find(':text'),
+                selectedFile = numFiles > 1 ? numFiles + ' files selected' : label;
+
+            if( input.length ) {
+                input.val(selectedFile);
+            }
+            //importConfirm();
+            $( "#importConfirm").show();
+            importCsv(selectedFile);
+        });
+    });
+
+});
+
+
+
 $(document).ready(function () {
     loadIssues();
     tableIssues = $('#issuesTable').DataTable();
@@ -92,34 +206,14 @@ $(document).ready(function () {
 
 
     $("#export").click(function (e) {
-        var currentFilter = tableIssues.ajax.url();
+        exportCsv();
+    });
 
-        var existingGmc = null;
-        var isNew = false;
-        var params = currentFilter.split("?")[1].split("&");
-        for(i=0;i<params.length;i++){
-            if(params[i].startsWith("gmc=")) {
-                existingGmc = params[i].substring( params[i].indexOf("=") + 1);
-            }
-            if(params[i].startsWith("filter=new")) {
-                isNew = true;
-            }
-        }
-
-        if(existingGmc) {
-            $(':hidden#filter').remove();
-            $(':hidden#days').remove();
-            $('#exportIssuesForm').append('<input type="hidden" id="gmc" name="gmc" value="" />');
-            $(':hidden#gmc').val(existingGmc);
-        }
-        if(isNew) {
-            $(':hidden#gmc').remove();
-            $('#exportIssuesForm').append('<input type="hidden" id="filter" name="filter" value="new" />');
-            $('#exportIssuesForm').append('<input type="hidden" id="days" name="days" value="45" />');
-        }
-
-        $(':hidden#length').val("60000");       //TODO not sure what limit if any should be applied
-
+    $("#cancelImport").click(function (e) {
+        return false;
+    });
+    $("#proceedImport").click(function (e) {
+        return true;
     });
 
 });

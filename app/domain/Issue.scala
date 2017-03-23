@@ -1,6 +1,7 @@
 package domain
 
 import java.util.Date
+import org.joda.time.format.ISODateTimeFormat
 import play.api.libs.json._
 
 case class LoggedIssue(
@@ -25,9 +26,9 @@ case class LoggedIssue(
                         resolutionDate: Option[Date],
                         comments: Option[String]
                       ) {
-  
+
   def toCsvForUI(): String = {
-    this.issueId + "," + this.status + "," + this.loggedBy + "," + this.dateLogged + "," + this.issueOrigin + "," + this.GMC + "," + this.description + "," + this.patientId.getOrElse("")
+    this.issueId + "," + this.status + "," + this.loggedBy + "," + ISODateTimeFormat.dateTime().print(this.dateLogged.getTime) + "," + this.issueOrigin + "," + this.GMC + "," + this.description + "," + this.patientId.getOrElse("")
   }
 }
 

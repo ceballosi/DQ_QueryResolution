@@ -29,9 +29,18 @@ JUST A SIMPLE VIEW AS PART OF WORKFLOW DEFINITION
     <form name="exportIssuesForm" id="exportIssuesForm" method='get' action="/export">
         <input type="hidden" id="length" name="length" value="1" />
 
-        <button type='submit' id="export" class="btn btn-default btn-success pull-left submitButton">Export filtered</button>
+        <button type='submit' id="export" class="btn btn-primary pull-left dqmsButton">Export filtered</button>
     </form>
 
-    <button type="submit" id="submitButton" class="btn btn-default btn-success pull-right submitButton">Send</button>
+
+    &nbsp;
+    <button type="submit" id="submitButton" class="btn btn-primary dqmsButton">Send</button>
+
+
+    @*<span class="btn btn-primary btn-file pull-right dqmsButton">*@
+        @*Import&hellip; <input type="file" id="importFile" accept=".csv">*@
+    @*</span>*@
+
 
 }
+

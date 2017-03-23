@@ -1,18 +1,22 @@
 package controllers
 
+import java.io.{File, PrintWriter, StringWriter}
 import javax.inject._
 
 import controllers.UiUtils._
 import dao.Searching.{SearchRequest, SearchResult}
 import domain._
 import org.slf4j.{Logger, LoggerFactory}
-import play.api.libs.json.Json
+import play.api.libs.Files.TemporaryFile
+import play.api.libs.json.{JsString, JsObject, JsValue, Json}
 import play.api.libs.json.Json._
+import play.api.mvc.MultipartFormData.FilePart
 import play.api.mvc._
 import services.{IssueTrackingService, MailService}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.io.Source
+import scala.util.{Try, Failure, Success}
 
 @Singleton
 class HomeController @Inject()(issueTracking: IssueTrackingService, mailService: MailService)(implicit ec: ExecutionContext) extends Controller {
@@ -105,5 +109,41 @@ class HomeController @Inject()(issueTracking: IssueTrackingService, mailService:
     }
   }
 
+
+  def upload = Action(parse.multipartFormData) { implicit request =>
+    val result = Try {
+
+      val filePart: FilePart[TemporaryFile] = request.body.files.head
+      import java.io.File
+      val filename = filePart.filename
+      val contentType = filePart.contentType
+      val toFile: File = new File(s"/tmp/filePart/$filename")
+      toFile.delete()     //previous
+      filePart.ref.moveTo(toFile)
+      val failures: List[(Int, Throwable)] = issueTracking.importFile(toFile)
+
+      if(failures.length == 0) Ok("OK")
+      else {
+        Ok(failuresToJson(failures))
+      }
+    }
+    result.getOrElse {
+      val e: Throwable = result.failed.get
+      log.error(s"File upload failed ${e.getMessage}\n" + e.getStackTrace.mkString("\n"))
+      Ok("File upload failed")
+    }
+  }
+
+
+
+  //toJson without building a 'failure' case class & writes method
+  def failuresToJson(failures: List[(Int, Throwable)]): JsValue = {
+
+    val list: List[JsObject] = failures.map { case (i, throwable) =>
+      Json.obj("rownum" -> JsString(i.toString),
+        "error" -> JsString(throwable.toString))
+    }
+    Json.toJson(list)
+  }
 
 }

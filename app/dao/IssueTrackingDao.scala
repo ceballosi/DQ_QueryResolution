@@ -104,6 +104,12 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
   def update(o: LoggedIssue): Future[Unit] = ???
 
+  def insert(issue: LoggedIssue) = {
+//    db.run(
+//      loggedIssues += issue
+//    )
+  }
+
   def findById(id: Long): Future[Option[LoggedIssue]] = db.run(loggedIssues.filter(_.id === id).result.headOption)
 
 

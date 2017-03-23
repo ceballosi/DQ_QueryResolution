@@ -82,7 +82,7 @@ footer {
     /*line-height: 2;*/
 }
 
-.submitButton{
+.dqmsButton{
     background-color: #337ab7;
     font-size: 12px;
 }
@@ -90,14 +90,23 @@ footer {
     cursor: pointer;
 }
 
-.remove-button {
-    color: #c50909;
-    padding-left: 27px;
+.btn-file {
+    position: relative;
+    overflow: hidden;
 }
-
-.edit-button {
-    color: #035C04;
-    padding-left: 27px;
+.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: white;
+    cursor: inherit;
+    display: block;
 }
 
 .noneDisplay {
