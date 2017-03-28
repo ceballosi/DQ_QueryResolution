@@ -125,8 +125,12 @@ function importCsv(name) {
             $("#importConfirm").modal('hide');
         },
         success: function (data) {
-            if (data.length == 0) {
-                alert('Import completed successfully: ' + data);
+            if (data == "OK" || data.length == 0) {
+                BootstrapDialog.show({
+                    title: 'Import Successful',
+                    size: BootstrapDialog.SIZE_SMALL,
+                    type: BootstrapDialog.TYPE_SUCCESS
+                });
             } else {
                 var errorRows = "<tbody id='failuresTableBody'>";
 
@@ -134,11 +138,11 @@ function importCsv(name) {
                     errorRows += "<tr><td>" + data[i].rownum + "</td><td>" + data[i].error + "<td></tr>";
                 }
                 errorRows += "</tbody>";
-            }
-            $("#failuresTableBody").replaceWith(errorRows);
-            $("#importErrors").modal({ backdrop: 'static'});
-            $("#importErrors").modal('show');
 
+                $("#failuresTableBody").replaceWith(errorRows);
+                $("#importErrors").modal({ backdrop: 'static'});
+                $("#importErrors").modal('show');
+            }
         },
         error: function (jqXHR, textStatus, errorThrown) {
             alert("An unexpected error occurred, please see server logs:" + textStatus + ': ' + errorThrown);

@@ -50,7 +50,7 @@ header {
 }
 
 footer {
-    background-color: #4C4;
+    background-color: #7BB87B;
     min-height: 30px;
     width: 100%;
 }
@@ -96,6 +96,10 @@ footer {
     background-color: #ebccd1;
 }
 
+.bootstrap-dialog.type-success .modal-header {
+    background-color: #7BB87B;
+    text-decoration-color: #000000;
+}
 
 .cursorPointer {
     cursor: pointer;
