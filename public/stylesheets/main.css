@@ -86,6 +86,17 @@ footer {
     background-color: #337ab7;
     font-size: 12px;
 }
+
+/*failureTable pallete deep-red-> color: #a94442;*/
+.table-failure-striped > tbody > tr:nth-of-type(2n+1) {
+    background-color: #f2dede;
+}
+
+.thead-failure-default {
+    background-color: #ebccd1;
+}
+
+
 .cursorPointer {
     cursor: pointer;
 }

@@ -9,10 +9,10 @@ import dao.IssueTrackingDao
 import dao.Searching.{SearchRequest, SearchResult}
 import domain._
 import org.joda.time.format.ISODateTimeFormat
-import org.slf4j.{LoggerFactory, Logger}
+import org.slf4j.{Logger, LoggerFactory}
 import purecsv.safe.converter.StringConverter
 
-import scala.collection.GenTraversableOnce
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
@@ -99,6 +99,8 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
 
     val result = CSVReader[LoggedIssue].readCSVFromString(fileContent)
 
+    //TODO - add stronger validation on issue import
+    // e.g. copy successes via another validating constructor?
     val (successes, failures: List[(Int, Throwable)]) = result.getSuccessesAndFailures
     if (failures.size > 0) {
       log.error(s"Import File ${file.getName}, ${failures.length} FAILURES" )
@@ -110,10 +112,20 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
       successes.foreach(println)
     }
 
-    //TODO - get 2nd set of failures from import  into db ??
-    successes.map{ case (idx,issue) => issueTrackingDao.insert(issue)}
-    //return both sets of failures?
-    failures
+    var mutableFailures: mutable.Buffer[(Int, Throwable)] = failures.toBuffer
+    //get 2nd set of failures from import  into db
+    successes.map { case (idx, issue) =>
+      val result = Try {
+        issueTrackingDao.insert(issue)
+      }
+      result.getOrElse {
+        val e: Throwable = result.failed.get
+        mutableFailures += ((idx, e))
+      }
+    }
+    //return both sets of failures sorted/merged by row number
+    mutableFailures ++ failures
+    mutableFailures.sortBy(_._1).toList
   }
 
 
