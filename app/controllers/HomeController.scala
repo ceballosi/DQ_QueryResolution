@@ -60,6 +60,11 @@ class HomeController @Inject()(issueTracking: IssueTrackingService, mailService:
   }
 
 
+  def listGmcs = Action.async { implicit req =>
+    issueTracking.listGmcs.map(gmcs => Ok(gmcsToJson(gmcs)))
+  }
+
+
   def container = Action {
     Ok(views.html.container())
   }

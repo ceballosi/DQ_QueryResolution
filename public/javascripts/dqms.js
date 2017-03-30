@@ -36,6 +36,29 @@ function loadIssues() {
 }
 
 
+function loadGMCs() {
+    $.ajax({
+        url: "/listGmcs",
+        success: function (data) {
+            if (data.length > 0) {
+
+                var output = [];
+                for (var i = 0; i < data.length; i++) {
+                    output.push('<option value="'+ data[i].gmc +'">'+ data[i].gmc +'</option>');
+                }
+                $('#gmcSelect').html(output.join(''));
+
+            } else {
+                alert("no GMCs to load - there may have been an error");
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert("An unexpected error occurred loading GMCs, please see server logs:" + textStatus + ': ' + errorThrown);
+        }
+    });
+}
+
+
 function sendSelected(e) {
     var selectedIds = new Array();
 
@@ -146,7 +169,7 @@ function statusChange(selectedStatus) {
         });
         setTimeout(function () {
             tableIssues.ajax.url(currentFilter).load();
-        }, 900);
+        }, 2000);
     }
 }
 
@@ -282,7 +305,7 @@ $(function() {
 $(document).ready(function () {
     loadIssues();
     tableIssues = $('#issuesTable').DataTable();
-
+    loadGMCs();
 
     $("#allIssues").click(function (e) {
         filterTable(tableIssues, "/list", e);
@@ -293,8 +316,8 @@ $(document).ready(function () {
         filterTable(tableIssues, url, e);
     });
 
-    $(".gmc").click(function (e) {
-        var url = "/list?gmc=" + e.target.innerText;
+    $('#gmcSelect').change(function(e) {
+        var url = "/list?gmc=" + this.value;
         filterTable(tableIssues, url, e);
     });
 

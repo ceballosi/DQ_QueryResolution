@@ -10,9 +10,11 @@ import play.api.db.slick.DatabaseConfigProvider
 import slick.driver.JdbcProfile
 import slick.lifted.{ColumnOrdered, ProvenShape}
 
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 trait IssueTrackingDao extends BaseDao[LoggedIssue, Long] {
+  def listGmcs: Future[Seq[String]]
   def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[LoggedIssue]]
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[LoggedIssue]]
   def findByCriteria(cr : SearchCriteria): Future[Seq[LoggedIssue]]
@@ -103,6 +105,11 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     db.run(queryBySearchCriteria(cr).result)
   }
 
+  def listGmcs: Future[Seq[String]] = {
+    val query = loggedIssues.map(_.GMC ).distinct.sorted
+    db.run(query.result)
+  }
+
   def update(o: LoggedIssue): Future[Unit] = ???
 
   def insert(issue: LoggedIssue) = {
@@ -116,7 +123,7 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
       if (issue.issueId.contains("0001")) {
         throw new Exception("blow up " + issue.issueId)
       }
-//    }
+//      }
     db.run(
       loggedIssues.filter( _.issueId === issue.issueId).map(iss => (iss.status)) update (newStatus)
     )

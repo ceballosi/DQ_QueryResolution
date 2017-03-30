@@ -46,17 +46,13 @@
                     <br>
                     <a id="newIssues" href="/">New issues</a>
                 </p>
-                <div class="gmcs">GMCs</div>
-                <ul id="dq-filters">
-                    <a id="gmcRGT" class="gmc" href="/dq-filters/1">RGT</a>
-                    <br>
-                    <a id="gmcRJ1" class="gmc" href="/dq-filters/2">RJ1</a>
-                    <br>
-                    <a id="gmcRRK" class="gmc" href="/dq-filters/3">RRK</a>
-                    <br>
-                    <a id="gmcRTD" class="gmc" href="/dq-filters/4">RTD</a>
-                    <br>
-                </ul>
+                <form class="form-horizontal">
+
+                    <div class="gmcs form-group-sm">GMCs
+                        <select id="gmcSelect" class="input-sm">
+                        </select>
+                    </div>
+                </form>
             </nav>
             <section id="main">
             @content

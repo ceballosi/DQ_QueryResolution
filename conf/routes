@@ -8,6 +8,7 @@ GET         /tmp/create/db        controllers.HomeController.tmpMethod
 
 GET         /container            controllers.HomeController.container
 GET         /list                 controllers.HomeController.listAjaxAsync
+GET         /listGmcs             controllers.HomeController.listGmcs
 
 GET         /export               controllers.HomeController.export
 GET         /send                 controllers.HomeController.sendNotifications

@@ -21,12 +21,19 @@ object UiUtils {
     Json.toJson(list)
   }
 
-  //toJson without building a 'failure' case class & writes method
   def failuresToJsonIssueIds(failures: List[(String, Throwable)]): JsValue = {
 
     val list: List[JsObject] = failures.map { case (s, throwable) =>
       Json.obj("rownum" -> JsString(s),
         "error" -> JsString(throwable.toString))
+    }
+    Json.toJson(list)
+  }
+
+  def gmcsToJson(gmcs: Seq[String]): JsValue = {
+
+    val list: Seq[JsObject] = gmcs.map { gmc =>
+      Json.obj("gmc" -> JsString(gmc))
     }
     Json.toJson(list)
   }

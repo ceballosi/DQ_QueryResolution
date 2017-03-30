@@ -20,6 +20,7 @@ import scala.util.{Failure, Success, Try}
 
 trait IssueTrackingService {
   def allIssues: Future[Seq[LoggedIssue]]
+  def listGmcs: Future[Seq[String]]
   def allIssuesNow: List[LoggedIssue]
   def findByCriteria(cr : SearchCriteria): Future[Seq[LoggedIssue]]
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[LoggedIssue]]
@@ -75,6 +76,9 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
       issues
     }
   } */
+
+  def listGmcs: Future[Seq[String]] = issueTrackingDao.listGmcs
+
 
   def findByCriteria(searchCriteria : SearchCriteria): Future[Seq[LoggedIssue]] =
     issueTrackingDao.findByCriteria(searchCriteria)
