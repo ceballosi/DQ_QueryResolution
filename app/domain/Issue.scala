@@ -70,12 +70,12 @@ case object Draft extends Status
 
 case object Open extends Status
 
-case object Close extends Status
+case object Closed extends Status
 
 case object InvalidStatus extends Status
 
 object Status {
-  def validStatuses = Vector(Draft, Open, Close)
+  def validStatuses = Vector(Draft, Open, Closed)
 }
 
 case class SearchCriteria(gmc: Option[String] = None,

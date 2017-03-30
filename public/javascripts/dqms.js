@@ -36,7 +36,7 @@ function loadIssues() {
 }
 
 
-function submitSelected(e) {
+function sendSelected(e) {
     var selectedIds = new Array();
 
     if (tableIssues.rows({selected: true}).count() > 0) {
@@ -52,6 +52,104 @@ function submitSelected(e) {
     }
     e.preventDefault();
 }
+
+function statusChangeDialog(e) {
+    var statusDialog = new BootstrapDialog({
+        title: 'Change Status',
+        message: 'Select new status for selected issues',
+        buttons: [{
+            label: 'Draft',
+            cssClass: 'btn-confirm',
+            action: function(dialogItself){
+                dialogItself.close();
+                statusChangeConfirm("Draft");
+            }
+        }, {
+            label: 'Open',
+            cssClass: 'ok-default',
+            action: function(dialogItself){
+                dialogItself.close();
+                statusChangeConfirm("Open");
+            }
+        }, {
+            label: 'Closed',
+            cssClass: 'failure-default',
+            action: function(dialogItself){
+                dialogItself.close();
+                statusChangeConfirm("Closed");
+                statusDialog.close();
+            }
+        }]
+    });
+    statusDialog.realize();
+    statusDialog.getModalFooter().css("text-align", "center");
+    statusDialog.open();
+}
+
+function statusChangeConfirm(selectedStatus) {
+    BootstrapDialog.confirm({
+        title: 'Status Change',
+        message: 'Are you sure you want to change selected issues to: ' +selectedStatus+ '?',
+        type: BootstrapDialog.TYPE_WARNING,
+        btnOKLabel: 'Change Status',
+        btnOKClass: 'btn-warning',
+        callback: function (result) {
+            if (result) {
+                statusChange(selectedStatus);
+            }
+        }
+    });
+}
+function statusChange(selectedStatus) {
+    var selectedIds = new Array();
+
+    if (tableIssues.rows({selected: true}).count() > 0) {
+
+        tableIssues.rows({selected: true}).data().each(function (rowData) {
+            selectedIds.push(rowData.DT_RowId);
+        });
+
+        var currentFilter = tableIssues.ajax.url();
+        var formData = new FormData();
+        formData.append('change', selectedStatus);
+        formData.append('selectedIssues', selectedIds);
+
+        $.ajax({
+            url: '/status',
+            data: formData,
+            type: 'POST',
+            contentType: false,
+            processData: false,
+            success: function (data) {
+                if (data == "OK" || data.length == 0) {
+                    BootstrapDialog.show({
+                        title: 'Status Change Successful',
+                        size: BootstrapDialog.SIZE_SMALL,
+                        type: BootstrapDialog.TYPE_SUCCESS
+                    });
+                } else {
+                    var errorRows = "<tbody id='failuresTableBody'>";
+
+                    for (var i = 0; i < data.length; i++) {
+                        errorRows += "<tr><td>" + data[i].rownum + "</td><td>" + data[i].error + "<td></tr>";
+                    }
+                    errorRows += "</tbody>";
+
+                    $("#statusErrTableBody").replaceWith(errorRows);
+                    $("#statusErrors").modal({ backdrop: 'static'});
+                    $("#statusErrors").modal('show');
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                alert("An unexpected error occurred, please see server logs:" + textStatus + ': ' + errorThrown);
+            }
+        });
+        setTimeout(function () {
+            tableIssues.ajax.url(currentFilter).load();
+        }, 900);
+    }
+}
+
 
 function filterTable(tableIssues, url, e) {
     tableIssues.ajax.url(url).load();
@@ -200,8 +298,12 @@ $(document).ready(function () {
         filterTable(tableIssues, url, e);
     });
 
-    $("#submitButton").click(function (e) {
-        submitSelected(e);
+    $("#sendButton").click(function (e) {
+        sendSelected(e);
+    });
+
+    $("#statusButton").click(function (e) {
+        statusChangeDialog(e);
     });
 
 

@@ -96,6 +96,13 @@ footer {
     background-color: #ebccd1;
 }
 
+.ok-default {
+    background-color: #C0DAB5;
+}
+.failure-default {
+    background-color: #ebccd1;
+}
+
 .bootstrap-dialog.type-success .modal-header {
     background-color: #7BB87B;
     text-decoration-color: #000000;

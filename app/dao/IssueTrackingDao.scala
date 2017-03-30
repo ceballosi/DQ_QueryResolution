@@ -16,6 +16,7 @@ trait IssueTrackingDao extends BaseDao[LoggedIssue, Long] {
   def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[LoggedIssue]]
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[LoggedIssue]]
   def findByCriteria(cr : SearchCriteria): Future[Seq[LoggedIssue]]
+  def changeStatus(newStatus: Status, issue: LoggedIssue): Future[Unit]
   // TODO To be removed
   def tableSetup(data: Seq[LoggedIssue])
 }
@@ -108,6 +109,18 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     db.run(
       loggedIssues += issue
     )
+  }
+
+  def changeStatus(newStatus: Status, issue: LoggedIssue): Future[Unit] = {
+//    Future {
+      if (issue.issueId.contains("0001")) {
+        throw new Exception("blow up " + issue.issueId)
+      }
+//    }
+    db.run(
+      loggedIssues.filter( _.issueId === issue.issueId).map(iss => (iss.status)) update (newStatus)
+    )
+    Future(println(issue))
   }
 
   def findById(id: Long): Future[Option[LoggedIssue]] = db.run(loggedIssues.filter(_.id === id).result.headOption)

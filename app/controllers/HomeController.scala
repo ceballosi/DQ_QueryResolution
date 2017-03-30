@@ -124,7 +124,7 @@ class HomeController @Inject()(issueTracking: IssueTrackingService, mailService:
 
       if(failures.length == 0) Ok("OK")
       else {
-        Ok(failuresToJson(failures))
+        Ok(failuresToJsonRowIds(failures))
       }
     }
     result.getOrElse {
@@ -136,14 +136,40 @@ class HomeController @Inject()(issueTracking: IssueTrackingService, mailService:
 
 
 
-  //toJson without building a 'failure' case class & writes method
-  def failuresToJson(failures: List[(Int, Throwable)]): JsValue = {
 
-    val list: List[JsObject] = failures.map { case (i, throwable) =>
-      Json.obj("rownum" -> JsString(i.toString),
-        "error" -> JsString(throwable.toString))
+  def changeStatus = Action.async(parse.multipartFormData) { implicit req =>
+    val result = Try {
+
+      val body: Map[String, Seq[String]] = req.body.dataParts
+
+      val selected = param(body, "selectedIssues").get
+      log.debug(s"selected issues=$selected")
+      val issueIds = selected.split(",").toList
+
+      val change = param(body, "change").get
+      log.debug(s"change newStatus=$change")
+      val newStatus = domain.Status.validStatuses.find(_.toString == change).get
+      log.debug(s"newStatus=$newStatus")
+
+      val failures: Future[List[(String, Throwable)]] = issueTracking.changeStatus(newStatus,issueIds)
+
+      val eventualResult: Future[Result] = failures.map { failed => {
+        println("failed.length=" + failed.length)
+        println("failed=" + failed)
+        if (failed.isEmpty == 0) Ok("OK")
+        else {
+          //          Future(Ok(failuresToJsonIssueIds(failed)))
+          Ok(failuresToJsonIssueIds(failed))
+        }
+      }
+      }
+      eventualResult
     }
-    Json.toJson(list)
+    result.getOrElse {
+      val e: Throwable = result.failed.get
+      log.error(s"Change Status failed ${e.getMessage}\n" + e.getStackTrace.mkString("\n"))
+      Future(Ok("Change Status failed"))
+    }
   }
 
 }

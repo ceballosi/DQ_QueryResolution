@@ -6,7 +6,7 @@ import java.util.Date
 import javax.inject.{Inject, Singleton}
 
 import dao.IssueTrackingDao
-import dao.Searching.{SearchRequest, SearchResult}
+import dao.Searching.{SearchResult, SearchRequest}
 import domain._
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.{Logger, LoggerFactory}
@@ -16,7 +16,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 trait IssueTrackingService {
   def allIssues: Future[Seq[LoggedIssue]]
@@ -25,6 +25,7 @@ trait IssueTrackingService {
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[LoggedIssue]]
   def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[LoggedIssue]]
   def importFile(file: File): List[(Int, Throwable)]
+  def changeStatus(newStatus: Status, issueIds: List[String]): Future[List[(String, Throwable)]]
   //TODO : To be removed (temporary method to create a table and populate data)
   def tmpMethod: Future[Unit]
 
@@ -99,7 +100,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
 
     val result = CSVReader[LoggedIssue].readCSVFromString(fileContent)
 
-    //TODO - add stronger validation on issue import
+    //TODO - add stronger validation on issue import e.g format of issue-id, and required fields
     // e.g. copy successes via another validating constructor?
     val (successes, failures: List[(Int, Throwable)]) = result.getSuccessesAndFailures
     if (failures.size > 0) {
@@ -108,8 +109,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
     }
 
     if (successes.size > 0) {
-      log.error(s"Import File ${file.getName}, ${successes.length} successes" )
-      successes.foreach(println)
+      log.info(s"Import File ${file.getName}, ${successes.length} successes" )
     }
 
     var mutableFailures: mutable.Buffer[(Int, Throwable)] = failures.toBuffer
@@ -126,6 +126,32 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
     //return both sets of failures sorted/merged by row number
     mutableFailures ++ failures
     mutableFailures.sortBy(_._1).toList
+  }
+
+
+  def changeStatus(newStatus: Status, issueIds: List[String]): Future[List[(String, Throwable)]] = {
+    val failures = new ListBuffer[(String, Throwable)]
+
+    val findResult: Future[SearchResult[LoggedIssue]] = findByIssueIds(issueIds)
+
+
+    findResult.map { searchResult =>
+      searchResult.items.map { issue =>
+
+        val result = Try {
+          //TODO - implement allowable state change logic before performing actual update
+          issueTrackingDao.changeStatus(newStatus, issue)
+        }
+        result.getOrElse {
+          val e: Throwable = result.failed.get
+          failures += ((issue.issueId, e))
+          println("svc=" + issue)
+        }
+
+      }
+    }
+
+    Future(failures.toList)
   }
 
 
