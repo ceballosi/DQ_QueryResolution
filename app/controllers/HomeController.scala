@@ -1,6 +1,5 @@
 package controllers
 
-import java.io.{File, PrintWriter, StringWriter}
 import javax.inject._
 
 import controllers.UiUtils._
@@ -8,15 +7,14 @@ import dao.Searching.{SearchRequest, SearchResult}
 import domain._
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.Files.TemporaryFile
-import play.api.libs.json.{JsString, JsObject, JsValue, Json}
+import play.api.libs.json.Json
 import play.api.libs.json.Json._
 import play.api.mvc.MultipartFormData.FilePart
 import play.api.mvc._
 import services.{IssueTrackingService, MailService}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.io.Source
-import scala.util.{Try, Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 @Singleton
 class HomeController @Inject()(issueTracking: IssueTrackingService, mailService: MailService)(implicit ec: ExecutionContext) extends Controller {
@@ -62,6 +60,10 @@ class HomeController @Inject()(issueTracking: IssueTrackingService, mailService:
 
   def listGmcs = Action.async { implicit req =>
     issueTracking.listGmcs.map(gmcs => Ok(gmcsToJson(gmcs)))
+  }
+
+  def listOrigins = Action.async { implicit req =>
+    issueTracking.listOrigins.map(origins => Ok(originsToJson(origins)))
   }
 
 
@@ -153,7 +155,7 @@ class HomeController @Inject()(issueTracking: IssueTrackingService, mailService:
 
       val change = param(body, "change").get
       log.debug(s"change newStatus=$change")
-      val newStatus = domain.Status.validStatuses.find(_.toString == change).get
+      val newStatus = domain.Status.allStatuses.find(_.toString == change).get
       log.debug(s"newStatus=$newStatus")
 
       val failures: Future[List[(String, Throwable)]] = issueTracking.changeStatus(newStatus,issueIds)

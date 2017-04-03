@@ -21,6 +21,7 @@ import scala.util.{Failure, Success, Try}
 trait IssueTrackingService {
   def allIssues: Future[Seq[LoggedIssue]]
   def listGmcs: Future[Seq[String]]
+  def listOrigins: Future[Seq[String]]
   def allIssuesNow: List[LoggedIssue]
   def findByCriteria(cr : SearchCriteria): Future[Seq[LoggedIssue]]
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[LoggedIssue]]
@@ -79,6 +80,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
 
   def listGmcs: Future[Seq[String]] = issueTrackingDao.listGmcs
 
+  def listOrigins: Future[Seq[String]] = issueTrackingDao.listOrigins
 
   def findByCriteria(searchCriteria : SearchCriteria): Future[Seq[LoggedIssue]] =
     issueTrackingDao.findByCriteria(searchCriteria)
@@ -214,9 +216,9 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
         status = statuses(r.nextInt(statuses.length)),
         GMC = gmcList(r.nextInt(gmcList.length)),
         patientId = Some((r.nextInt(1000) + 110000000).toString),
-        dateLogged = randomDateBetween(LocalDate.of(2016, 12, 1), LocalDate.of(2017, 3, 10)),
+        dateLogged = randomDateBetween(LocalDate.of(2016, 12, 1), LocalDate.of(2017, 3, 20)),
         issueOrigin = issueOrigin(r.nextInt(issueOrigin.length)),
-        dateSent = Some(randomDateBetween(LocalDate.of(2017, 2, 1), LocalDate.of(2017, 3, 20))
+        dateSent = Some(randomDateBetween(LocalDate.of(2017, 2, 1), LocalDate.of(2017, 3, 30))
         ))
       issueLs += c
     }

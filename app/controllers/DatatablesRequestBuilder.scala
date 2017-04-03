@@ -4,7 +4,7 @@ import java.util.Date
 
 import controllers.UiUtils._
 import dao.Searching.SearchRequest
-import domain.{Draft, SearchCriteria}
+import domain.{Status, Draft, SearchCriteria}
 import org.joda.time.LocalDate
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.mvc.{AnyContent, Request}
@@ -53,11 +53,13 @@ object DatatablesRequestBuilder {
     var gmc = param(request, "gmc")
     var dateLogged: Option[Date] = None
     var patientId: Option[String] = None
-    var issueStatus: Option[domain.Status] = None
+    var issueStatus = Status.statusFrom(param(request, "status"))
+    var issueOrigin = param(request, "origin")
 
     if (isNew) {
       patientId = None
       gmc = None
+      issueOrigin = None
       issueStatus = Some(Draft)
       val days = param(request, "days").getOrElse("0").toInt
       dateLogged = Some(LocalDate.now().minusDays(days).toDate)
@@ -69,6 +71,7 @@ object DatatablesRequestBuilder {
       gmc = None
       dateLogged = None
       issueStatus = None
+      issueOrigin = None
     }
 
     val sortCol = param(request, "order[0][column]")
@@ -80,7 +83,7 @@ object DatatablesRequestBuilder {
     log.info(s"sortCol=$sortCol sortDir=$sortDir sortColFromUI=$sortColFromUI sortOrderFromUI=$sortOrderFromUI")
 
     val sortCriteria : Option[(String, String)] = Some((sortColFromUI,sortOrderFromUI))
-    val searchCriteria = SearchCriteria(gmc, issueStatus = issueStatus, dateLogged = dateLogged, patientId = patientId)
+    val searchCriteria = SearchCriteria(gmc, issueStatus = issueStatus, issueOrigin = issueOrigin, dateLogged = dateLogged, patientId = patientId)
 
     val searchRequest: SearchRequest = SearchRequest(offset, pageSize, searchCriteria, draw, sortCriteria)
     log.info(s"searchRequest: $searchRequest")

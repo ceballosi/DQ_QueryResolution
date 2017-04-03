@@ -43,6 +43,8 @@ function loadGMCs() {
             if (data.length > 0) {
 
                 var output = [];
+                output.push('<option value="'+ 'all' +'">'+ 'all' +'</option>');
+
                 for (var i = 0; i < data.length; i++) {
                     output.push('<option value="'+ data[i].gmc +'">'+ data[i].gmc +'</option>');
                 }
@@ -50,6 +52,30 @@ function loadGMCs() {
 
             } else {
                 alert("no GMCs to load - there may have been an error");
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert("An unexpected error occurred loading GMCs, please see server logs:" + textStatus + ': ' + errorThrown);
+        }
+    });
+}
+
+function loadOrigins() {
+    $.ajax({
+        url: "/listOrigins",
+        success: function (data) {
+            if (data.length > 0) {
+
+                var output = [];
+                output.push('<option value="'+ 'all' +'">'+ 'all' +'</option>');
+
+                for (var i = 0; i < data.length; i++) {
+                    output.push('<option value="'+ data[i].origin +'">'+ data[i].origin +'</option>');
+                }
+                $('#originSelect').html(output.join(''));
+
+            } else {
+                alert("no Origins to load - there may have been an error");
             }
         },
         error: function (jqXHR, textStatus, errorThrown) {
@@ -173,10 +199,22 @@ function statusChange(selectedStatus) {
     }
 }
 
+function buildFilter() {
+    var gmc = $('#gmcSelect').val() == 'all' ? '' : '&gmc=' + $('#gmcSelect').val();
+    var status = $('#statusSelect').val() == 'all' ? '' : '&status=' + $('#statusSelect').val();
+    var origin = $('#originSelect').val() == 'all' ? '' : '&origin=' + $('#originSelect').val();
+    return gmc + status + origin;
+}
 
 function filterTable(tableIssues, url, e) {
     tableIssues.ajax.url(url).load();
     e.preventDefault();
+}
+
+function resetInputs() {
+    $('#gmcSelect').val('all');
+    $('#statusSelect').val('all');
+    $('#originSelect').val('all');
 }
 
 function getParameterByName(name, url) {
@@ -192,6 +230,8 @@ function exportCsv() {
     var currentFilter = tableIssues.ajax.url();
 
     var existingGmc = null;
+    var status = null;
+    var origin = null;
     var isNew = false;
     var allIssues = false;
     var split = currentFilter.split("?");
@@ -203,6 +243,12 @@ function exportCsv() {
             if (params[i].startsWith("gmc=")) {
                 existingGmc = params[i].substring(params[i].indexOf("=") + 1);
             }
+            if (params[i].startsWith("status=")) {
+                status = params[i].substring(params[i].indexOf("=") + 1);
+            }
+            if (params[i].startsWith("origin=")) {
+                origin = params[i].substring(params[i].indexOf("=") + 1);
+            }
             if (params[i].startsWith("filter=new")) {
                 isNew = true;
             }
@@ -211,24 +257,41 @@ function exportCsv() {
         allIssues = true;
     }
 
+
     if (allIssues) {
-        $(':hidden#filter').remove();
-        $(':hidden#days').remove();
-        $(':hidden#gmc').remove();
+        cleanHiddenInputs();
     }
-    if (existingGmc) {
-        $(':hidden#filter').remove();
-        $(':hidden#days').remove();
-        $('#exportIssuesForm').append('<input type="hidden" id="gmc" name="gmc" value="" />');
-        $(':hidden#gmc').val(existingGmc);
+
+    if (existingGmc || status) {
+        cleanHiddenInputs();
+        if (existingGmc) {
+            $('#exportIssuesForm').append('<input type="hidden" id="gmc" name="gmc" value="" />');
+            $(':hidden#gmc').val(existingGmc);
+        }
+        if (status) {
+            $('#exportIssuesForm').append('<input type="hidden" id="status" name="status" value="" />');
+            $(':hidden#status').val(status);
+        }
+        if (origin) {
+            $('#exportIssuesForm').append('<input type="hidden" id="origin" name="origin" value="" />');
+            $(':hidden#origin').val(origin);
+        }
     }
     if (isNew) {
-        $(':hidden#gmc').remove();
+        cleanHiddenInputs();
         $('#exportIssuesForm').append('<input type="hidden" id="filter" name="filter" value="new" />');
         $('#exportIssuesForm').append('<input type="hidden" id="days" name="days" value="45" />');
     }
 
     $(':hidden#length').val("60000");       //TODO not sure what limit if any should be applied
+
+    function cleanHiddenInputs() {
+        $(':hidden#filter').remove();
+        $(':hidden#days').remove();
+        $(':hidden#gmc').remove();
+        $(':hidden#status').remove();
+        $(':hidden#origin').remove();
+    }
 }
 
 
@@ -306,18 +369,33 @@ $(document).ready(function () {
     loadIssues();
     tableIssues = $('#issuesTable').DataTable();
     loadGMCs();
+    loadOrigins();
+    resetInputs();
 
     $("#allIssues").click(function (e) {
+        resetInputs();
+        var url = "/list?" + buildFilter();
         filterTable(tableIssues, "/list", e);
     });
 
     $("#newIssues").click(function (e) {
+        resetInputs();
         var url = "/list?filter=new&days=30";   //should be last 30days by default
         filterTable(tableIssues, url, e);
     });
 
     $('#gmcSelect').change(function(e) {
-        var url = "/list?gmc=" + this.value;
+        var url = "/list?" + buildFilter();
+        filterTable(tableIssues, url, e);
+    });
+
+    $('#statusSelect').change(function(e) {
+        var url = "/list?" + buildFilter();
+        filterTable(tableIssues, url, e);
+    });
+
+    $('#originSelect').change(function(e) {
+        var url = "/list?" + buildFilter();
         filterTable(tableIssues, url, e);
     });
 

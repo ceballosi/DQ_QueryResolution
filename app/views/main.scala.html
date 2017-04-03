@@ -41,18 +41,27 @@
         <div class="container-fluid body-content">
             <nav>
                 <p class="dq-all">
-                    <a id="allIssues" href="/dq-filters/">All Issues</a>
+                    <a id="allIssues" href="/dq-filters/">&nbsp;All Issues</a>
                     <br>
                     <br>
-                    <a id="newIssues" href="/">New issues</a>
+                    <a id="newIssues" href="/">&nbsp;New issues</a>
                 </p>
-                <form class="form-horizontal">
-
-                    <div class="gmcs form-group-sm">GMCs
+                    <div class="dqmsSelect form-group-sm">&nbsp;GMCs
                         <select id="gmcSelect" class="input-sm">
                         </select>
                     </div>
-                </form>
+                    <div class="dqmsSelect form-group-sm">&nbsp;Status
+                        <select id="statusSelect" class="input-sm">
+                            <option>all</option>
+                            <option>Draft</option>
+                            <option>Open</option>
+                            <option>Closed</option>
+                        </select>
+                    </div>
+                    <div class="dqmsSelect form-group-sm">&nbsp;Issue Origin
+                        <select id="originSelect" class="input-sm">
+                        </select>
+                    </div>
             </nav>
             <section id="main">
             @content

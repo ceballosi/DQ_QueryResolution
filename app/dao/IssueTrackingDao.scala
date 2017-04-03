@@ -15,6 +15,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 
 trait IssueTrackingDao extends BaseDao[LoggedIssue, Long] {
   def listGmcs: Future[Seq[String]]
+  def listOrigins: Future[Seq[String]]
   def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[LoggedIssue]]
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[LoggedIssue]]
   def findByCriteria(cr : SearchCriteria): Future[Seq[LoggedIssue]]
@@ -43,7 +44,7 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
   // Custom column mapping
   implicit val statusMapper = MappedColumnType.base[Status, String](
-    d => d.toString, d => Status.validStatuses.find(_.toString == d).getOrElse(InvalidStatus)
+    d => d.toString, d => Status.allStatuses.find(_.toString == d).getOrElse(InvalidStatus)
   )
 
   implicit val dateMapper = MappedColumnType.base[java.util.Date, java.sql.Timestamp](
@@ -110,6 +111,11 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     db.run(query.result)
   }
 
+  def listOrigins: Future[Seq[String]] = {
+    val query = loggedIssues.map(_.issueOrigin ).distinct.sorted
+    db.run(query.result)
+  }
+
   def update(o: LoggedIssue): Future[Unit] = ???
 
   def insert(issue: LoggedIssue) = {
@@ -120,9 +126,9 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
   def changeStatus(newStatus: Status, issue: LoggedIssue): Future[Unit] = {
 //    Future {
-      if (issue.issueId.contains("0001")) {
-        throw new Exception("blow up " + issue.issueId)
-      }
+//      if (issue.issueId.contains("0001")) {
+//        throw new Exception("blow up " + issue.issueId)
+//      }
 //      }
     db.run(
       loggedIssues.filter( _.issueId === issue.issueId).map(iss => (iss.status)) update (newStatus)

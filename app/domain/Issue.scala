@@ -72,10 +72,24 @@ case object Open extends Status
 
 case object Closed extends Status
 
+//TODO - remove this - don't think we should allow invalid status at all!
 case object InvalidStatus extends Status
 
 object Status {
   def validStatuses = Vector(Draft, Open, Closed)
+  def allStatuses = Vector(Draft, Open, Closed, InvalidStatus)
+
+  def statusFrom(strStatus: String): Status = {
+    domain.Status.allStatuses.find(_.toString == strStatus).get
+  }
+
+  def statusFrom(optionStrStatus: Option[String]): Option[Status] = {
+    optionStrStatus match {
+      case Some(value) => Some(statusFrom(value))
+      case _ => None
+    }
+  }
+
 }
 
 case class SearchCriteria(gmc: Option[String] = None,

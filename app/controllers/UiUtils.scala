@@ -21,6 +21,7 @@ object UiUtils {
     Json.toJson(list)
   }
 
+
   def failuresToJsonIssueIds(failures: List[(String, Throwable)]): JsValue = {
 
     val list: List[JsObject] = failures.map { case (s, throwable) =>
@@ -30,10 +31,18 @@ object UiUtils {
     Json.toJson(list)
   }
 
-  def gmcsToJson(gmcs: Seq[String]): JsValue = {
 
+  def gmcsToJson(gmcs: Seq[String]): JsValue = {
     val list: Seq[JsObject] = gmcs.map { gmc =>
       Json.obj("gmc" -> JsString(gmc))
+    }
+    Json.toJson(list)
+  }
+
+
+  def originsToJson(origins: Seq[String]): JsValue = {
+    val list: Seq[JsObject] = origins.map { origin =>
+      Json.obj("origin" -> JsString(origin))
     }
     Json.toJson(list)
   }
