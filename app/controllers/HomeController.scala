@@ -179,4 +179,9 @@ class HomeController @Inject()(issueTracking: IssueTrackingService, mailService:
     }
   }
 
+
+  def reports = Action { implicit req =>
+    Ok(reportsToJson(null))
+  }
+
 }

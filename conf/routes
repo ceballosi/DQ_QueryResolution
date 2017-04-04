@@ -13,6 +13,7 @@ GET         /listOrigins          controllers.HomeController.listOrigins
 
 GET         /export               controllers.HomeController.export
 GET         /send                 controllers.HomeController.sendNotifications
+GET         /reports              controllers.HomeController.reports
 POST        /upload               controllers.HomeController.upload
 POST        /status               controllers.HomeController.changeStatus
 

@@ -335,6 +335,33 @@ function importCsv(name) {
     return false;
 }
 
+function reportDisplay(name) {
+    var formData = new FormData();
+    $.ajax({
+        url: '/reports',
+        data: formData,
+        contentType: false,
+        processData: false,
+        success: function (data) {
+            var errorRows = "<tbody id='reportTableBody'>";
+
+            for (var i = 0; i < data.length; i++) {
+                errorRows += "<tr><td>" + data[i].outstanding + "</td><td>" + data[i].resolved + "</td>"
+                 + "<td>" + data[i].qtime + "</td><td>" + data[i].qitem + "</td></tr>";
+            }
+            errorRows += "</tbody>";
+
+            $("#reportTableBody").replaceWith(errorRows);
+            $("#reportsModal").modal({backdrop: 'static'});
+            $("#reportsModal").modal('show');
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert("An unexpected error occurred, please see server logs:" + textStatus + ': ' + errorThrown);
+        }
+    });
+    return false;
+}
+
 
 //import event setup
 $(function() {
@@ -405,6 +432,10 @@ $(document).ready(function () {
 
     $("#statusButton").click(function (e) {
         statusChangeDialog(e);
+    });
+
+    $("#reportButton").click(function (e) {
+        reportDisplay(e);
     });
 
 

@@ -3,6 +3,8 @@ package controllers
 import play.api.libs.json.{JsString, Json, JsObject, JsValue}
 import play.api.mvc.{AnyContent, Request}
 
+import scala.collection.mutable.ListBuffer
+
 object UiUtils {
 
   def param(request: Map[String, Seq[String]], field: String): Option[String] =
@@ -43,6 +45,21 @@ object UiUtils {
   def originsToJson(origins: Seq[String]): JsValue = {
     val list: Seq[JsObject] = origins.map { origin =>
       Json.obj("origin" -> JsString(origin))
+    }
+    Json.toJson(list)
+  }
+
+  def reportsToJson(reportSeq: Seq[String]): JsValue = {
+    val aReport = ("fake","data","for","example")
+    var reports = ListBuffer(aReport)
+    reports += aReport
+    reports += aReport
+
+    val list: Seq[JsObject] = reports.map { report =>
+      Json.obj("outstanding" -> JsString(report._1),
+        "resolved" -> JsString(report._2),
+        "qtime" -> JsString(report._3),
+        "qitem" -> JsString(report._4))
     }
     Json.toJson(list)
   }

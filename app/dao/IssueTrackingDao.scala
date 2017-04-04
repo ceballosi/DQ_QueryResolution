@@ -135,6 +135,11 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     )
     Future(println(issue))
   }
+//  db.run(
+//    loggedIssues.filter( _.issueId === issue.issueId).map(iss => (iss.status)) update (newStatus)
+//  ).recover{
+//    ex: Throwable => ex
+//  }
 
   def findById(id: Long): Future[Option[LoggedIssue]] = db.run(loggedIssues.filter(_.id === id).result.headOption)
 
