@@ -1,4 +1,4 @@
-name := """DQ_QueryResolution"""
+name := "DQ_QueryResolution"
 
 version := "0.1"
 

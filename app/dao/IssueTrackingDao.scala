@@ -22,6 +22,9 @@ trait IssueTrackingDao extends BaseDao[LoggedIssue, Long] {
   def changeStatus(newStatus: Status, issue: LoggedIssue): Future[Unit]
   // TODO To be removed
   def tableSetup(data: Seq[LoggedIssue])
+  def findAllJoin: Future[Seq[(String,String,String)]]
+
+  def findQueryChain(selected: String): Future[Seq[QueryChain]]
 }
 
 /**
@@ -41,6 +44,7 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
   override def toTable = TableQuery[LoggedIssueTable]
 
   private val loggedIssues = toTable
+  private val queryChains = TableQuery[QueryChainTable]
 
   // Custom column mapping
   implicit val statusMapper = MappedColumnType.base[Status, String](
@@ -64,6 +68,29 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     "patientId" -> { (t: LoggedIssueTable) => t.patientId}
   )
 
+
+  def findAllJoin: Future[Seq[(String, String, String)]] = {
+//        val innerJoin = for {
+//          iss <- loggedIssues
+//          qcs <- queryChains if iss.issueId === qcs.issueId
+//        } yield (iss.issueId, qcs.comment, qcs.date)
+
+    val innerJoin = for {
+      (iss, qcs) <- loggedIssues join queryChains on (_.issueId === _.issueId)
+    } yield (iss.issueOrigin, qcs.comment, qcs.date)
+
+    val joinFuture = db.run(innerJoin.result)
+    joinFuture.map(println)
+    val aReport = ("fake", "data", "for")
+    val reports = ListBuffer(aReport)
+    Future(reports.toList.toSeq)
+  }
+
+  def findQueryChain(selected: String): Future[Seq[QueryChain]] = {
+    findAllQueryChain
+  }
+
+  def findAllQueryChain: Future[Seq[QueryChain]] = db.run(queryChains.sortBy(_.id).result)
 
   private def queryBySortCriteria(query: Query[LoggedIssueTable, LoggedIssueTable#TableElementType, Seq], sort: (String, String)) = {
         val rep = columnMap.getOrElse(sort._1, throw new RuntimeException(s"Invalid column used for sorting ${sort._1}"))
@@ -241,6 +268,26 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
       familyId, patientId, dataItem, description, fileReference, dateSent, weeksOpen, escalation, dueForEscalation,
       resolution, resolutionDate, comments) <>((LoggedIssue.apply _).tupled, LoggedIssue.unapply)
 
+  }
+
+  /** **************  Table definition ***************/
+  class QueryChainTable(tag: Tag) extends Table[QueryChain](tag, "querychain") {
+
+    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+
+    def issueId = column[String]("issue_id")
+
+    def status = column[String]("status")
+
+    def comment = column[String]("comment")
+
+    def date = column[Date]("date")
+
+    def username = column[String]("username")
+
+    def partyId = column[Int]("party_id")
+
+    override def * : ProvenShape[QueryChain] = (id, issueId, status, comment, date, username, partyId) <>((QueryChain.apply _).tupled, QueryChain.unapply)
   }
 
 }

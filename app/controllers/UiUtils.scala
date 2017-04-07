@@ -1,6 +1,9 @@
 package controllers
 
-import play.api.libs.json.{JsString, Json, JsObject, JsValue}
+import java.text.SimpleDateFormat
+
+import domain.QueryChain
+import play.api.libs.json._
 import play.api.mvc.{AnyContent, Request}
 
 import scala.collection.mutable.ListBuffer
@@ -60,6 +63,20 @@ object UiUtils {
         "resolved" -> JsString(report._2),
         "qtime" -> JsString(report._3),
         "qitem" -> JsString(report._4))
+    }
+    Json.toJson(list)
+  }
+
+  def queryChainsToJson(queryChains: Seq[QueryChain]): JsValue = {
+    val list: Seq[JsObject] = queryChains.map { queryChain =>
+
+      val dateStr = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss").format(queryChain.date)
+
+      Json.obj("status" -> JsString(queryChain.status),
+        "date" -> JsString(dateStr),
+        "user" -> JsString(queryChain.username),
+        "partyid" -> JsNumber(queryChain.partyId),
+        "comment" -> JsString(queryChain.comment))
     }
     Json.toJson(list)
   }

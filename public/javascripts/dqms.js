@@ -23,6 +23,9 @@ function loadIssues() {
             orderable: false,
             className: 'select-checkbox',
             targets:   0
+        }, {
+            className: 'qchain',
+            targets:   6
         } ],
         select: {
             style:    'os',
@@ -31,10 +34,50 @@ function loadIssues() {
         order: [[ 4, 'desc' ]],
         buttons: [
             'copy', 'excel', 'pdf'
-        ]
+        ],
+        "createdRow": function (row, data, index) {
+            $('td', row).eq(6).html(data.GMC + "<span class='pull-right glyphicon glyphicon-th-list'></span>");
+        }
     });
 }
 
+function displayQChain(el) {
+    var issueId = tableIssues.row( el ).data().DT_RowId;
+    var participantId = tableIssues.row( el ).data().patientId;
+
+    var formData = new FormData();
+    formData.append('selectedIssue', issueId);
+
+    $.ajax({
+        url: '/querychain',
+        data: formData,
+        type: 'POST',
+        contentType: false,
+        processData: false,
+        success: function (data) {
+            var qChains = "<tbody id='qChainTableBody'>";
+            var qchainClass = "qchain-dq";
+
+            for (var i = 0; i < data.length; i++) {
+
+                if(data[i].partyid == 0)  qchainClass = "qchain-dq";
+                else qchainClass = "qchain-gmc";
+
+                qChains += "<tr class='" + qchainClass +"'><td><strong>" + data[i].status + "</strong></td><td class='text-left'>" + data[i].date + "</td><td class='text-right'>" + data[i].user + "</td></tr>";
+                qChains += "<tr class='" + qchainClass +"'><td colspan='8'>" + data[i].comment + "</td></tr>";
+            }
+            qChains += "</tbody>";
+
+            $("#qChainTableBody").replaceWith(qChains);
+            $("#qChainIssueId").text(issueId + " / " + participantId);
+            $("#qChainModal").modal({backdrop: 'static'});
+            $("#qChainModal").modal('show');
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert("An unexpected error occurred, please see server logs:" + textStatus + ': ' + errorThrown);
+        }
+    });
+}
 
 function loadGMCs() {
     $.ajax({
@@ -449,6 +492,10 @@ $(document).ready(function () {
         if(selectedFile.length) {
             importCsv(selectedFile);
         }
+    });
+
+    $(document ).on( "click", "TD.qchain", function() {
+        displayQChain(this);
     });
 
 });

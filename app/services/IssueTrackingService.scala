@@ -6,7 +6,7 @@ import java.util.Date
 import javax.inject.{Inject, Singleton}
 
 import dao.IssueTrackingDao
-import dao.Searching.{SearchResult, SearchRequest}
+import dao.Searching.{SearchRequest, SearchResult}
 import domain._
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.{Logger, LoggerFactory}
@@ -16,7 +16,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 trait IssueTrackingService {
   def allIssues: Future[Seq[LoggedIssue]]
@@ -31,6 +31,11 @@ trait IssueTrackingService {
   //TODO : To be removed (temporary method to create a table and populate data)
   def tmpMethod: Future[Unit]
 
+  def allQc: Future[Seq[QueryChain]]
+  def allQcJoin: Future[Seq[(String,String,String)]]
+  def findAllJoin: Future[Seq[(String,String,String)]]
+
+  def queryChain(selected: String): Future[Seq[QueryChain]]
 }
 
 @Singleton
@@ -92,6 +97,25 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
     }
     issues
   }
+
+  def allQc: Future[Seq[QueryChain]] = ???
+//  def allQc: Future[Seq[QueryChain]] = {
+//    var qc: Future[Seq[QueryChain]] = qcDao.findAll
+//    qc
+//  }
+
+ def allQcJoin: Future[Seq[(String,String,String)]] = ???
+// def allQcJoin: Future[Seq[(String,String,String)]] = {
+//   val qc: Future[Seq[(String, String, String)]] = qcDao.findAllJoin
+//   qc
+//  }
+
+  def findAllJoin: Future[Seq[(String,String,String)]]= {
+    val alljoin: Future[Seq[(String, String, String)]] = issueTrackingDao.findAllJoin
+    alljoin
+  }
+
+  def queryChain(selected: String): Future[Seq[QueryChain]] = issueTrackingDao.findQueryChain(selected)
 
   def findAllIssues: List[LoggedIssue] = {
     tmpPopulateIssues

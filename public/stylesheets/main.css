@@ -67,6 +67,15 @@ footer {
     color: #337ab7;
 }
 
+/*querychain marker*/
+.qchain {}
+
+.qchain-dq {
+    background-color: #F8DFCE;
+}
+.qchain-gmc {
+    background-color: #D7E6F3;
+}
 /* this isn't doing it's job to centre the text - fix or remove RR*/
 .appName {
     width: 100%;

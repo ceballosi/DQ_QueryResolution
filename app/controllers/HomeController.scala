@@ -180,8 +180,62 @@ class HomeController @Inject()(issueTracking: IssueTrackingService, mailService:
   }
 
 
+  def reportsWorks = Action { implicit req =>
+    val findResult: Future[Seq[QueryChain]] = issueTracking.allQc
+    var total: Int = 0
+    var selectedIssues: Seq[LoggedIssue] = null
+
+    findResult.onComplete{
+      case Success(chains) => {
+        chains.map{println}
+      }
+      case Failure(e) => {e.printStackTrace}
+    }
+
+    Ok(Json.toJson("printed chains?"))
+  }
+
   def reports = Action { implicit req =>
+    val findResult: Future[Seq[(String,String,String)]] = issueTracking.findAllJoin
+
+    findResult.onComplete{
+      case Success(chains) => {
+        chains.map{tuple => println(s"1:${tuple._1} 2:${tuple._2} 3:${tuple._3}")}
+      }
+      case Failure(e) => {e.printStackTrace}
+    }
+
+//    Ok(Json.toJson("printed chains?"))
     Ok(reportsToJson(null))
+  }
+
+
+  def queryChain = Action.async(parse.multipartFormData) { implicit req =>
+    val result = Try {
+
+      val body: Map[String, Seq[String]] = req.body.dataParts
+
+      val selected = param(body, "selectedIssue").get
+      log.debug(s"selected issue=$selected")
+
+      val eventualQueryChains: Future[Seq[QueryChain]] = issueTracking.queryChain(selected)
+
+      val eventualResult: Future[Result] = eventualQueryChains.map {
+        queryChains => {
+          log.debug(s"issue:$selected queryChains.length= ${queryChains.length}")
+          if (queryChains.isEmpty == 0) Ok("OK")
+          else {
+            Ok(queryChainsToJson(queryChains))
+          }
+        }
+      }
+      eventualResult
+    }
+    result.getOrElse {
+      val e: Throwable = result.failed.get
+      log.error(s"Retrieving Query Chain failed ${e.getMessage}\n" + e.getStackTrace.mkString("\n"))
+      Future(Ok("Retrieving Query Chain failed"))
+    }
   }
 
 }

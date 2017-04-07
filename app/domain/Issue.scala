@@ -1,5 +1,6 @@
 package domain
 
+import java.text.SimpleDateFormat
 import java.util.Date
 import org.joda.time.format.ISODateTimeFormat
 import play.api.libs.json._
@@ -36,12 +37,19 @@ object LoggedIssue {
 
   implicit val loggedIssueWrites = new Writes[LoggedIssue] {
     def writes(c: LoggedIssue): JsValue = {
+      val dateLogged = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss").format(c.dateLogged)
+
+      val dateResolved = c.resolutionDate match {
+        case Some(date) => new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss").format(date)
+        case None => ""
+      }
+
       Json.obj(
         "select" -> "", //UI selection col
         "status" -> c.status.toString,
         "DT_RowId" -> Json.toJson(c.issueId),
         "loggedBy" -> Json.toJson(c.loggedBy),
-        "dateLogged" -> c.dateLogged.toString,
+        "dateLogged" -> dateLogged,
         "issueOrigin" -> Json.toJson(c.issueOrigin),
         "GMC" -> Json.toJson(c.GMC),
         "urgent" -> Json.toJson(c.urgent),
@@ -55,7 +63,7 @@ object LoggedIssue {
         "escalation" -> Json.toJson(c.escalation),
         "dueForEscalation" -> Json.toJson(c.dueForEscalation),
         "resolution" -> Json.toJson(c.resolution),
-        "resolutionDate" -> Json.toJson(c.resolutionDate),
+        "resolutionDate" -> dateResolved,
         "comments" -> Json.toJson(c.comments)
       )
     }
