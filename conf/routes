@@ -3,20 +3,20 @@
 # ~~~~
 
 # home page
-GET         /                     controllers.HomeController.listIssues
-GET         /tmp/create/db        controllers.HomeController.tmpMethod
+GET         /                     controllers.DqController.listIssues
+GET         /tmp/create/db        controllers.DqController.tmpMethod
 
-GET         /container            controllers.HomeController.container
-POST        /list                 controllers.HomeController.listAjaxAsync
-GET         /listGmcs             controllers.HomeController.listGmcs
-GET         /listOrigins          controllers.HomeController.listOrigins
+GET         /container            controllers.DqController.container
+POST        /list                 controllers.DqController.listAjaxAsync
+GET         /listGmcs             controllers.DqController.listGmcs
+GET         /listOrigins          controllers.DqController.listOrigins
 
-GET         /export               controllers.HomeController.export
-GET         /send                 controllers.HomeController.sendNotifications
-GET         /reports              controllers.HomeController.reports
-POST        /upload               controllers.HomeController.upload
-POST        /status               controllers.HomeController.changeStatus
-POST        /querychain           controllers.HomeController.queryChain
+GET         /export               controllers.DqController.export
+GET         /send                 controllers.DqController.sendNotifications
+GET         /reports              controllers.DqController.reports
+POST        /upload               controllers.DqController.upload
+POST        /status               controllers.DqController.changeStatus
+POST        /querychain           controllers.DqController.queryChain
 
 # Map static resources from the /public folder to the /assets URL path
 GET         /assets/*file         controllers.Assets.versioned(path="/public", file: Asset)

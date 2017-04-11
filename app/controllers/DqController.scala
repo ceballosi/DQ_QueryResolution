@@ -17,7 +17,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 @Singleton
-class HomeController @Inject()(issueTracking: IssueTrackingService, mailService: MailService)(implicit ec: ExecutionContext) extends Controller {
+class DqController @Inject()(issueTracking: IssueTrackingService, mailService: MailService)(implicit ec: ExecutionContext) extends Controller {
 
   val log: Logger = LoggerFactory.getLogger(this.getClass())
 
@@ -33,7 +33,7 @@ class HomeController @Inject()(issueTracking: IssueTrackingService, mailService:
   //TODO : To be removed (Just a temporary method to create a table using model)
   def tmpMethod = Action.async { implicit req =>
     issueTracking.tmpMethod.map(_ =>
-      Redirect(routes.HomeController.listIssues))
+      Redirect(routes.DqController.listIssues))
   }
 
 
