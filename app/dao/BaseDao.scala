@@ -1,6 +1,5 @@
 package dao
 
-import domain.LoggedIssue
 import slick.lifted.TableQuery
 
 import scala.concurrent.Future

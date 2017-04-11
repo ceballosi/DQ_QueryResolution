@@ -5,7 +5,7 @@ import java.time.{LocalDate, ZoneId}
 import java.util.Date
 import javax.inject.{Inject, Singleton}
 
-import dao.IssueTrackingDao
+import dao.{SearchCriteria, IssueTrackingDao}
 import dao.Searching.{SearchRequest, SearchResult}
 import domain._
 import org.joda.time.format.ISODateTimeFormat
@@ -19,13 +19,13 @@ import scala.io.Source
 import scala.util.Try
 
 trait IssueTrackingService {
-  def allIssues: Future[Seq[LoggedIssue]]
+  def allIssues: Future[Seq[Issue]]
   def listGmcs: Future[Seq[String]]
   def listOrigins: Future[Seq[String]]
-  def allIssuesNow: List[LoggedIssue]
-  def findByCriteria(cr : SearchCriteria): Future[Seq[LoggedIssue]]
-  def findByIssueIds(issueIds: List[String]): Future[SearchResult[LoggedIssue]]
-  def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[LoggedIssue]]
+  def allIssuesNow: List[Issue]
+  def findByCriteria(cr : SearchCriteria): Future[Seq[Issue]]
+  def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]]
+  def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[Issue]]
   def importFile(file: File): List[(Int, Throwable)]
   def changeStatus(newStatus: Status, issueIds: List[String]): Future[List[(String, Throwable)]]
   //TODO : To be removed (temporary method to create a table and populate data)
@@ -67,12 +67,12 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
   }
 
 
-  def findBySearchRequest(searchRequest: SearchRequest) : Future[SearchResult[LoggedIssue]] =  issueTrackingDao.findBySearchRequest(searchRequest)
+  def findBySearchRequest(searchRequest: SearchRequest) : Future[SearchResult[Issue]] =  issueTrackingDao.findBySearchRequest(searchRequest)
 
-  def findByIssueIds(issueIds: List[String]): Future[SearchResult[LoggedIssue]] =  issueTrackingDao.findByIssueIds(issueIds)
+  def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]] =  issueTrackingDao.findByIssueIds(issueIds)
 
 
-  def allIssues: Future[Seq[LoggedIssue]] = issueTrackingDao.findAll
+  def allIssues: Future[Seq[Issue]] = issueTrackingDao.findAll
    /*{
     Future {
       var issues: List[LoggedIssue] = findAllIssues
@@ -87,11 +87,11 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
 
   def listOrigins: Future[Seq[String]] = issueTrackingDao.listOrigins
 
-  def findByCriteria(searchCriteria : SearchCriteria): Future[Seq[LoggedIssue]] =
+  def findByCriteria(searchCriteria : SearchCriteria): Future[Seq[Issue]] =
     issueTrackingDao.findByCriteria(searchCriteria)
 
-  def allIssuesNow: List[LoggedIssue] = {
-    var issues: List[LoggedIssue] = findAllIssues
+  def allIssuesNow: List[Issue] = {
+    var issues: List[Issue] = findAllIssues
     for(x <- 1 to 5){
       issues = issues ::: issues
     }
@@ -117,7 +117,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
 
   def queryChain(selected: String): Future[Seq[QueryChain]] = issueTrackingDao.findQueryChain(selected)
 
-  def findAllIssues: List[LoggedIssue] = {
+  def findAllIssues: List[Issue] = {
     tmpPopulateIssues
   }
 
@@ -128,7 +128,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
     import purecsv.safe._
     import purecsv.safe.tryutil._
 
-    val result = CSVReader[LoggedIssue].readCSVFromString(fileContent)
+    val result = CSVReader[Issue].readCSVFromString(fileContent)
 
     //TODO - add stronger validation on issue import e.g format of issue-id, and required fields
     // e.g. copy successes via another validating constructor?
@@ -162,7 +162,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
   def changeStatus(newStatus: Status, issueIds: List[String]): Future[List[(String, Throwable)]] = {
     val failures = new ListBuffer[(String, Throwable)]
 
-    val findResult: Future[SearchResult[LoggedIssue]] = findByIssueIds(issueIds)
+    val findResult: Future[SearchResult[Issue]] = findByIssueIds(issueIds)
 
 
     findResult.map { searchResult =>
@@ -198,52 +198,82 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
 
     val r = new Random
     val statuses = Status.validStatuses
-    val gmcList = List("RGT", "RJ1", "RRK", "RTD", "RP4", "REP", "RW3", "RTD", "RP4")
-    val issueOrigin = List("ServiceDesk", "DataQuality", "RedTeam", "Informatics", "BioInformatics")
-    val loggedBy = List("RJ", "JS", "DA")
+    val gmcList = List("RRK", "RGT", "RJ1", "RW3", "RTD", "RP4", "REP", "RTH", "RHM", "RH8", "RYJ", "RA7", "RHQ", "NI1")
+    val priorityList = List(0,0,0,0,0,0,0,0,0,1)
+    val dataSourceList = List("ServiceDesk", "DataQuality", "RedTeam", "Informatics", "BioInformatics")
+    val dataItemList = List("Gender", "FamilyId", "DOB", "Excision Margin", "Biological Relationship to Proband")
+    val shortDescList = List("missing", "bad data", "incorrect entry", "invalid", "re-submission", "out of range")
+    val areaList = List("Cancer", "RD")
 
     def randomDateBetween(from: LocalDate, to: LocalDate) = {
       val d = from.plusDays(r.nextInt(DAYS.between(from, to).toInt))
       Date.from(d.atStartOfDay(ZoneId.systemDefault()).toInstant())
     }
-
-    val data = LoggedIssue(
+    val data = Issue(
       1,
-      "RYJ-Orp-031",
+      "RIP-000022",
       statuses(r.nextInt(statuses.length)),
-      "RJ",
-      randomDateBetween(LocalDate.of(2017, 1, 1), LocalDate.of(2017, 3, 20)),
+      randomDateBetween(LocalDate.of(2017, 1, 1), LocalDate.now),
       "DataQuality",
-      "RYJ",
-      None,
-      "110120123",
-      Some((r.nextInt(1000) + 110000000).toString),
-      Some("Group size"),
+      1,
+      "Group size",
+      "Some desc",
       "Issue with family group size: Please see 'Group Issues' tab for more details and potential resolutions",
+      "RIP",
+      Some(("lsid"+ r.nextInt(1000) + 110000000).toString),
+      "RD",
       None,
       None,
       None,
       None,
       None,
-      None,
-      None,
-      Some("Comments on issue")
+      110000000
     )
 
     val issueLs = ListBuffer(data)
 
     data.copy(status = statuses(r.nextInt(statuses.length)))
     (1 to 10000).foreach { x =>
+
+      val randGmc = gmcList(r.nextInt(gmcList.length))
+      val statusChosen= statuses(r.nextInt(statuses.length))
+      val dateCreated = randomDateBetween(LocalDate.of(2016, 12, 1), LocalDate.now().minusDays(3))
+
+      val lsidList = List(null,"lsid" + "%05d".format(x))
+      var familyOption: Option[Int] = Some(x)
+      if (x % 5 != 0) {
+        familyOption = None
+      }
+
+      var resolutionDate: Option[Date] = None
+      if (statusChosen == Resolved) {
+        resolutionDate = Some(org.joda.time.LocalDate.fromDateFields(dateCreated).plusDays(25).toDate)
+      }
+
+      var queryDate: Option[Date] = None
+      if (List(Open,Responded).contains(statusChosen)) {
+        if(x%3==0) queryDate = Some(org.joda.time.LocalDate.fromDateFields(dateCreated).plusDays(2).toDate)
+      }
+
+      val escalation = org.joda.time.LocalDate.fromDateFields(dateCreated).plusDays(14).toDate
+
       val c = data.copy(
-        issueId = "RYJ-Orp-" + "%05d".format(x),
-        loggedBy = loggedBy(r.nextInt(loggedBy.length)),
-        status = statuses(r.nextInt(statuses.length)),
-        GMC = gmcList(r.nextInt(gmcList.length)),
-        patientId = Some((r.nextInt(1000) + 110000000).toString),
-        dateLogged = randomDateBetween(LocalDate.of(2016, 12, 1), LocalDate.of(2017, 3, 20)),
-        issueOrigin = issueOrigin(r.nextInt(issueOrigin.length)),
-        dateSent = Some(randomDateBetween(LocalDate.of(2017, 2, 1), LocalDate.of(2017, 3, 30))
-        ))
+        gmc = randGmc,
+        issueId = randGmc + "-" + "%07d".format(x),
+        status = statusChosen,
+        dateLogged = dateCreated,
+        dataSource = dataSourceList(r.nextInt(dataSourceList.length)),
+        priority = priorityList(r.nextInt(priorityList.length)),
+        dataItem = dataItemList(r.nextInt(dataItemList.length)),
+        shortDesc = shortDescList(r.nextInt(shortDescList.length)),
+        lsid = Option(lsidList(r.nextInt(lsidList.length))),
+        area = areaList(r.nextInt(areaList.length)),
+        familyId = familyOption,
+        queryDate = queryDate,
+        resolutionDate = resolutionDate,
+        escalation = Some(escalation),
+        participantId = r.nextInt(1000) + 110000000
+      )
       issueLs += c
     }
     issueLs.toList

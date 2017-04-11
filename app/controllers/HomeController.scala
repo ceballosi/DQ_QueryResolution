@@ -38,11 +38,11 @@ class HomeController @Inject()(issueTracking: IssueTrackingService, mailService:
 
 
 
-  def listAjaxAsync = Action.async { implicit req =>
+  def listAjaxAsync = Action.async(parse.tolerantFormUrlEncoded) { implicit req =>
 
-    val searchRequest: SearchRequest = DatatablesRequestBuilder.build(req.queryString)
+    val searchRequest: SearchRequest = DatatablesRequestBuilder.build(req.body ++ req.queryString)
 
-    val findResult: Future[SearchResult[LoggedIssue]] = issueTracking.findBySearchRequest(searchRequest)
+    val findResult: Future[SearchResult[Issue]] = issueTracking.findBySearchRequest(searchRequest)
 
     findResult.map {
       pageResult => {
@@ -78,9 +78,9 @@ class HomeController @Inject()(issueTracking: IssueTrackingService, mailService:
     log.debug(s"selected issues=$selected")
     val issueIds = selected.split(",").toList
 
-    val findResult: Future[SearchResult[LoggedIssue]] = issueTracking.findByIssueIds(issueIds)
+    val findResult: Future[SearchResult[Issue]] = issueTracking.findByIssueIds(issueIds)
     var total: Int = 0
-    var selectedIssues: Seq[LoggedIssue] = null
+    var selectedIssues: Seq[Issue] = null
 
     findResult.onComplete{
       case Success(searchResult) => {
@@ -98,11 +98,11 @@ class HomeController @Inject()(issueTracking: IssueTrackingService, mailService:
 
   def export = Action.async(parse.tolerantFormUrlEncoded) { implicit req =>
 
-    val searchRequest: SearchRequest = DatatablesRequestBuilder.build(req.queryString)
+    val searchRequest: SearchRequest = DatatablesRequestBuilder.build(req.body ++ req.queryString)
 
-    val findResult: Future[SearchResult[LoggedIssue]] = issueTracking.findBySearchRequest(searchRequest)
+    val findResult: Future[SearchResult[Issue]] = issueTracking.findBySearchRequest(searchRequest)
 
-    val csv = new StringBuilder(LoggedIssue.csvHeaderForUI + "\n")
+    val csv = new StringBuilder(Issue.csvHeaderForUI + "\n")
 
     findResult.map {
       pageResult => {
@@ -183,7 +183,7 @@ class HomeController @Inject()(issueTracking: IssueTrackingService, mailService:
   def reportsWorks = Action { implicit req =>
     val findResult: Future[Seq[QueryChain]] = issueTracking.allQc
     var total: Int = 0
-    var selectedIssues: Seq[LoggedIssue] = null
+    var selectedIssues: Seq[Issue] = null
 
     findResult.onComplete{
       case Success(chains) => {

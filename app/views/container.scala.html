@@ -13,18 +13,26 @@ JUST A SIMPLE VIEW AS PART OF WORKFLOW DEFINITION
         <thead class="thead-default">
             <tr>
                 <th>Select</th>
+                <th> Issue Id<div style="display: block;width: 51px;clear: both;"></div> </th>
                 <th> Status </th>
-                <th> Issue Id </th>
-                <th> Logged By </th>
                 <th> Date Logged </th>
-                <th> Issue Origin </th>
+                <th> Participant Id </th>
+                <th> Data Source </th>
+                <th> Priority </th>
+                <th> Data Item </th>
+                <th> Short Desc </th>
                 <th> GMC </th>
-                <th> Description </th>
-                <th> PatientId </th>
+                <th> LSID </th>
+                <th> Area </th>
+                <th> Description<div style="display: block;width: 250px;clear: both;"></div></th>
+                <th> Family Id </th>
+                <th> Query Date<div style="display: block;width: 40px;clear: both;"></div></th>
+                <th> Weeks Open </th>
+                <th> Resolution Date </th>
+                <th> Escalation </th>
             </tr>
         </thead>
     </table>
-
 
     <form name="exportIssuesForm" id="exportIssuesForm" method='get' action="/export">
         <input type="hidden" id="length" name="length" value="1" />

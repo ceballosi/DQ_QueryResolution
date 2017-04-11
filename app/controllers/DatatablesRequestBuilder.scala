@@ -3,11 +3,11 @@ package controllers
 import java.util.Date
 
 import controllers.UiUtils._
+import dao.SearchCriteria
 import dao.Searching.SearchRequest
-import domain.{Status, Draft, SearchCriteria}
+import domain.{Draft, Status}
 import org.joda.time.LocalDate
 import org.slf4j.{Logger, LoggerFactory}
-import play.api.mvc.{AnyContent, Request}
 
 /**
   * This builder is specifically to service the requirements of the UI Datatables.js component
@@ -17,7 +17,7 @@ object DatatablesRequestBuilder {
   val log: Logger = LoggerFactory.getLogger(this.getClass())
 
   //needs to be kept in sync with ui
-  private val uiColumnNames: List[String] = List("select/checkbox", "status", "DT_RowId", "loggedBy", "dateLogged", "issueOrigin", "GMC", "description", "patientId")
+  private val uiColumnNames: List[String] = List("select/checkbox", "DT_RowId", "status", "dateLogged", "participantId", "dataSource", "priority", "dataItem", "shortDesc", "gmc", "lsid", "area", "description", "familyId", "queryDate", "weeksOpen", "resolutionDate", "escalation", "participantId")
 
   //support both get & post by taking the param map
   def build(request: Map[String, Seq[String]]): SearchRequest = {
@@ -52,14 +52,14 @@ object DatatablesRequestBuilder {
 
     var gmc = param(request, "gmc")
     var dateLogged: Option[Date] = None
-    var patientId: Option[String] = None
+    var participantId: Option[Int] = None
     var issueStatus = Status.statusFrom(param(request, "status"))
-    var issueOrigin = param(request, "origin")
+    var dataSource = param(request, "origin")
 
     if (isNew) {
-      patientId = None
+      participantId = None
       gmc = None
-      issueOrigin = None
+      dataSource = None
       issueStatus = Some(Draft)
       val days = param(request, "days").getOrElse("0").toInt
       dateLogged = Some(LocalDate.now().minusDays(days).toDate)
@@ -67,23 +67,23 @@ object DatatablesRequestBuilder {
 
     //search is higher precedence than filters
     if (isSearch) {
-      patientId = Some(search.get)
+      participantId = Some(search.get.toInt)
       gmc = None
       dateLogged = None
       issueStatus = None
-      issueOrigin = None
+      dataSource = None
     }
 
     val sortCol = param(request, "order[0][column]")
     val sortDir = param(request, "order[0][dir]")
 
     //default to sort by dateLogged/desc
-    val sortColFromUI = uiColumnNames(sortCol.getOrElse("4").toInt)
+    val sortColFromUI = uiColumnNames(sortCol.getOrElse("3").toInt)
     val sortOrderFromUI = sortDir.getOrElse("desc")
     log.info(s"sortCol=$sortCol sortDir=$sortDir sortColFromUI=$sortColFromUI sortOrderFromUI=$sortOrderFromUI")
 
     val sortCriteria : Option[(String, String)] = Some((sortColFromUI,sortOrderFromUI))
-    val searchCriteria = SearchCriteria(gmc, issueStatus = issueStatus, issueOrigin = issueOrigin, dateLogged = dateLogged, patientId = patientId)
+    val searchCriteria = SearchCriteria(gmc, issueStatus = issueStatus, dataSource = dataSource, dateLogged = dateLogged, participantId = participantId)
 
     val searchRequest: SearchRequest = SearchRequest(offset, pageSize, searchCriteria, draw, sortCriteria)
     log.info(s"searchRequest: $searchRequest")

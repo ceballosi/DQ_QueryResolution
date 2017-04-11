@@ -2,8 +2,8 @@ package services
 
 import javax.inject.Inject
 
-import domain.LoggedIssue
-import org.slf4j.{LoggerFactory, Logger}
+import domain.Issue
+import org.slf4j.{Logger, LoggerFactory}
 import play.api.Environment
 import play.api.libs.mailer.{MailerClient, _}
 
@@ -11,7 +11,7 @@ class MailService @Inject()(mailerClient: MailerClient, environment: Environment
 
   val log: Logger = LoggerFactory.getLogger(this.getClass())
 
-  def send(issues: Seq[LoggedIssue]) = {
+  def send(issues: Seq[Issue]) = {
     val email: Email = MailService.createIssuesEmail(issues)
     log.info("Sending email ->" + email)
     val id = mailerClient.send(email)
@@ -48,7 +48,7 @@ object MailService {
 
 
 
-  def createIssuesEmail(issues: Seq[LoggedIssue]): Email = {
+  def createIssuesEmail(issues: Seq[Issue]): Email = {
 
     val odd = "background-color: #CDDFEE;"
     val even = "background-color: #FFFFF;"
@@ -59,7 +59,7 @@ object MailService {
         case 0 => odd
         case 1 => even
       }
-      rowContent++= s"<tr style='${rowcolor}' ><td>${issue.issueId}</td><td>${issue.dateLogged}</td><td>${issue.GMC}</td><td>${issue.description}</td><td>${issue.patientId.get}</td></tr>"
+      rowContent++= s"<tr style='${rowcolor}' ><td>${issue.issueId}</td><td>${issue.dateLogged}</td><td>${issue.gmc}</td><td>${issue.description}</td><td>${issue.participantId}</td></tr>"
     }
 
 
@@ -82,7 +82,7 @@ object MailService {
                             <th> Date Logged </th>
                             <th> GMC </th>
                             <th> Description </th>
-                            <th> PatientId </th>
+                            <th> ParticipantId </th>
                         </tr>
                     </thead>
                     <tbody>"""

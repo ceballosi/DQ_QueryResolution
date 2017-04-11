@@ -7,17 +7,31 @@ function loadIssues() {
     tableIssues = $('#issuesTable').DataTable({
         "processing": true,
         "serverSide": true,
-        "ajax": "/list",
+        type: 'POST',
+        "ajax": {
+            "url": "/list",
+            "type": "POST"
+        },
+        //"autoWidth": false,
         "columns": [
             {"data": "select"},
-            {"data": "status"},
             {"data": "DT_RowId"},
-            {"data": "loggedBy"},
+            {"data": "status"},
             {"data": "dateLogged"},
-            {"data": "issueOrigin"},
-            {"data": "GMC"},
+            {"data": "participantId"},
+            {"data": "dataSource"},
+            {"data": "priority"},
+            {"data": "dataItem"},
+            {"data": "shortDesc"},
+            {"data": "gmc"},
+            {"data": "lsid"},
+            {"data": "area"},
             {"data": "description"},
-            {"data": "patientId"}
+            {"data": "familyId"},
+            {"data": "queryDate"},
+            {"data": "weeksOpen"},
+            {"data": "resolutionDate"},
+            {"data": "escalation"}
         ],
         columnDefs: [ {
             orderable: false,
@@ -25,18 +39,18 @@ function loadIssues() {
             targets:   0
         }, {
             className: 'qchain',
-            targets:   6
+            targets:   9
         } ],
         select: {
             style:    'os',
             selector: 'td:first-child'
         },
-        order: [[ 4, 'desc' ]],
+        order: [[ 3, 'desc' ]],
         buttons: [
             'copy', 'excel', 'pdf'
         ],
         "createdRow": function (row, data, index) {
-            $('td', row).eq(6).html(data.GMC + "<span class='pull-right glyphicon glyphicon-th-list'></span>");
+            $('td', row).eq(9).html(data.gmc + "<span class='pull-right glyphicon glyphicon-th-list'></span>");
         }
     });
 }
@@ -118,11 +132,11 @@ function loadOrigins() {
                 $('#originSelect').html(output.join(''));
 
             } else {
-                alert("no Origins to load - there may have been an error");
+                alert("no list of Data Sources to load - there may have been an error");
             }
         },
         error: function (jqXHR, textStatus, errorThrown) {
-            alert("An unexpected error occurred loading GMCs, please see server logs:" + textStatus + ': ' + errorThrown);
+            alert("An unexpected error occurred loading Data Sources list, please see server logs:" + textStatus + ': ' + errorThrown);
         }
     });
 }
@@ -269,6 +283,7 @@ function getParameterByName(name, url) {
     return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
+// TODO change function to use buildfilter if possible...otherwise eg. no. of days is hardcoded in 2 places
 function exportCsv() {
     var currentFilter = tableIssues.ajax.url();
 
@@ -323,7 +338,7 @@ function exportCsv() {
     if (isNew) {
         cleanHiddenInputs();
         $('#exportIssuesForm').append('<input type="hidden" id="filter" name="filter" value="new" />');
-        $('#exportIssuesForm').append('<input type="hidden" id="days" name="days" value="45" />');
+        $('#exportIssuesForm').append('<input type="hidden" id="days" name="days" value="30" />');
     }
 
     $(':hidden#length').val("60000");       //TODO not sure what limit if any should be applied
