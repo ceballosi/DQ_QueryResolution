@@ -5,11 +5,12 @@ import java.util.Date
 import org.joda.time.format.ISODateTimeFormat
 import play.api.libs.json._
 
-case class Issue(//18 fields
+case class Issue(//18 fields (out of possible 22!)
                  id: Long,
                  issueId: String,
                  status: Status,
                  dateLogged: Date,
+                 participantId: Int,
                  dataSource: String,
                  priority: Int,
                  dataItem: String,
@@ -22,8 +23,7 @@ case class Issue(//18 fields
                  queryDate: Option[Date],
                  weeksOpen: Option[Int],
                  resolutionDate: Option[Date],
-                 escalation: Option[Date],
-                 participantId: Int
+                 escalation: Option[Date]
                 ) {
 
   def toCsvForUI(): String = {

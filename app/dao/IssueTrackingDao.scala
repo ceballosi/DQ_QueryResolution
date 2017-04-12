@@ -25,6 +25,8 @@ trait IssueTrackingDao extends BaseDao[Issue, Long] {
   def findAllJoin: Future[Seq[(String,String,String)]]
 
   def findQueryChain(selected: String): Future[Seq[QueryChain]]
+
+  def nextIssueId: Future[Int]
 }
 
 /**
@@ -61,6 +63,7 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     "status" -> { (t: IssueTable) => t.status },
     "DT_RowId" -> { (t: IssueTable) => t.issueId},
     "dateLogged" -> { (t: IssueTable) => t.dateLogged},
+    "participantId" -> { (t: IssueTable) => t.participantId},
     "dataSource" -> { (t: IssueTable) => t.dataSource},
     "priority" -> { (t: IssueTable) => t.priority},
     "dataItem" -> { (t: IssueTable) => t.dataItem},
@@ -73,9 +76,17 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     "queryDate" -> { (t: IssueTable) => t.queryDate},
     "resolutionDate" -> { (t: IssueTable) => t.resolutionDate},
     "weeksOpen" -> { (t: IssueTable) => t.weeksOpen},
-    "escalation" -> { (t: IssueTable) => t.escalation},
-    "participantId" -> { (t: IssueTable) => t.participantId}
+    "escalation" -> { (t: IssueTable) => t.escalation}
   )
+
+  //next issue id from separate explicit db sequence - issueid_id_seq
+  def nextIssueId(): Future[Int] = {
+    val value = db.run(
+      sql"select nextval('issueid_id_seq')".as[Int].head
+    )
+    value
+  }
+
 
 
   def findAllJoin: Future[Seq[(String, String, String)]] = {
@@ -240,6 +251,8 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
     def dateLogged = column[Date]("date_logged")
 
+    def participantId = column[Int]("participant_id")
+
     def dataSource = column[String]("data_source")
 
     def priority = column[Int]("priority")
@@ -266,12 +279,10 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
     def escalation = column[Option[Date]]("escalation")
 
-    def participantId = column[Int]("participant_id")
 
-
-    override def * : ProvenShape[Issue] = (id, issueId, status, dateLogged, dataSource, priority,
+    override def * : ProvenShape[Issue] = (id, issueId, status, dateLogged, participantId, dataSource, priority,
       dataItem, shortDesc, description, gmc, lsid, area, familyId, queryDate, weeksOpen, resolutionDate,
-      escalation, participantId) <>((Issue.apply _).tupled, Issue.unapply)
+      escalation) <>((Issue.apply _).tupled, Issue.unapply)
 
   }
 

@@ -16,7 +16,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 trait IssueTrackingService {
   def allIssues: Future[Seq[Issue]]
@@ -39,7 +39,7 @@ trait IssueTrackingService {
 }
 
 @Singleton
-class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(implicit ec: ExecutionContext) extends IssueTrackingService {
+class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, validator: ImportValidator)(implicit ec: ExecutionContext) extends IssueTrackingService {
 
   val log: Logger = LoggerFactory.getLogger(this.getClass())
 
@@ -67,7 +67,22 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
   }
 
 
-  def findBySearchRequest(searchRequest: SearchRequest) : Future[SearchResult[Issue]] =  issueTrackingDao.findBySearchRequest(searchRequest)
+  def findBySearchRequest(searchRequest: SearchRequest) : Future[SearchResult[Issue]] =  {
+//    val id: Future[Int] = issueTrackingDao.nextIssueId
+
+//    id.onComplete{
+//      case Success(idResult) => {
+//        println("service next id vector=" + idResult)
+//      }
+//      case Failure(e) => {e.printStackTrace}
+//    }
+
+    //    id.map(x => println("service next x=" + x))   // x is correct nextVal
+//    println("service next id=" + id)
+
+    println(nextIssueId("RRR"))
+    issueTrackingDao.findBySearchRequest(searchRequest)
+  }
 
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]] =  issueTrackingDao.findByIssueIds(issueIds)
 
@@ -98,6 +113,17 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
     issues
   }
 
+  def nextIssueId(gmc: String) : Future[String] =  {
+    val start = System.currentTimeMillis()
+    val startTime = System.nanoTime()
+    val fullId: Future[String] = issueTrackingDao.nextIssueId.map(id => f"${gmc}%s-${id}%07d")
+    fullId.map(println)
+    val estimatedTime = System.nanoTime() - startTime
+    val elapsed = System.currentTimeMillis() - start
+    println(s"elapsed=$elapsed  estimatedTime=$estimatedTime")
+    fullId
+  }
+
   def allQc: Future[Seq[QueryChain]] = ???
 //  def allQc: Future[Seq[QueryChain]] = {
 //    var qc: Future[Seq[QueryChain]] = qcDao.findAll
@@ -123,21 +149,23 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
 
 
   def importFile(file: File): List[(Int, Throwable)] = {
-    val fileContent = Source.fromFile(file).mkString
-
     import purecsv.safe._
     import purecsv.safe.tryutil._
 
+    val fileContent = Source.fromFile(file).mkString
     val result = CSVReader[Issue].readCSVFromString(fileContent)
 
     //TODO - add stronger validation on issue import e.g format of issue-id, and required fields
     // e.g. copy successes via another validating constructor?
-    val (successes, failures: List[(Int, Throwable)]) = result.getSuccessesAndFailures
+    val (successes: List[(Int, Issue)], failures: List[(Int, Throwable)]) = result.getSuccessesAndFailures
     if (failures.size > 0) {
       log.error(s"Import File ${file.getName}, ${failures.length} FAILURES" )
       failures.foreach(println)
     }
 
+    val (caseSuccesses: List[(Int, Issue)], caseFailures: List[(Int, Throwable)]) = validator.validate(successes)
+
+    //acummulate & count successes & report
     if (successes.size > 0) {
       log.info(s"Import File ${file.getName}, ${successes.length} successes" )
     }
@@ -146,7 +174,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
     //get 2nd set of failures from import  into db
     successes.map { case (idx, issue) =>
       val result = Try {
-        issueTrackingDao.insert(issue)
+//        issueTrackingDao.insert(issue)
       }
       result.getOrElse {
         val e: Throwable = result.failed.get
@@ -214,6 +242,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
       "RIP-000022",
       statuses(r.nextInt(statuses.length)),
       randomDateBetween(LocalDate.of(2017, 1, 1), LocalDate.now),
+      110000000,
       "DataQuality",
       1,
       "Group size",
@@ -226,8 +255,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
       None,
       None,
       None,
-      None,
-      110000000
+      None
     )
 
     val issueLs = ListBuffer(data)
@@ -262,6 +290,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
         issueId = randGmc + "-" + "%07d".format(x),
         status = statusChosen,
         dateLogged = dateCreated,
+        participantId = r.nextInt(1000) + 110000000,
         dataSource = dataSourceList(r.nextInt(dataSourceList.length)),
         priority = priorityList(r.nextInt(priorityList.length)),
         dataItem = dataItemList(r.nextInt(dataItemList.length)),
@@ -271,8 +300,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao)(imp
         familyId = familyOption,
         queryDate = queryDate,
         resolutionDate = resolutionDate,
-        escalation = Some(escalation),
-        participantId = r.nextInt(1000) + 110000000
+        escalation = Some(escalation)
       )
       issueLs += c
     }
