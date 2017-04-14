@@ -7,6 +7,7 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 scalaVersion := "2.11.7"
 
 resolvers += Resolver.sonatypeRepo("releases")
+resolvers += Resolver.sonatypeRepo("snapshots")
 
 libraryDependencies ++= Seq(
   ws,
@@ -18,6 +19,8 @@ libraryDependencies ++= Seq(
   "joda-time" % "joda-time" % "2.9.6",
   "com.chuusai" %% "shapeless" % "2.3.2",
   "com.github.melrief" %% "purecsv" % "0.0.9",
+//  "com.wix" %% "accord-core" % "0.6.1",
+  "com.wix" %% "accord-core" % "0.7-SNAPSHOT",
   "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test
 )
 

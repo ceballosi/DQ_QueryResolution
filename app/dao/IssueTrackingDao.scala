@@ -27,6 +27,7 @@ trait IssueTrackingDao extends BaseDao[Issue, Long] {
   def findQueryChain(selected: String): Future[Seq[QueryChain]]
 
   def nextIssueId: Future[Int]
+  def nextIssueId(gmc: String) : Future[String]
 }
 
 /**
@@ -87,6 +88,11 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     value
   }
 
+
+  def nextIssueId(gmc: String) : Future[String] =  {
+    val fullId: Future[String] = nextIssueId.map(id => f"${gmc}%s-${id}%07d")
+    fullId
+  }
 
 
   def findAllJoin: Future[Seq[(String, String, String)]] = {
@@ -261,13 +267,13 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
     def shortDesc = column[String]("short_desc")
 
-    def description = column[String]("description")
-
     def gmc = column[String]("gmc")
 
     def lsid = column[Option[String]]("lsid")
 
     def area = column[String]("area")
+
+    def description = column[String]("description")
 
     def familyId = column[Option[Int]]("family_id")
 
@@ -281,7 +287,7 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
 
     override def * : ProvenShape[Issue] = (id, issueId, status, dateLogged, participantId, dataSource, priority,
-      dataItem, shortDesc, description, gmc, lsid, area, familyId, queryDate, weeksOpen, resolutionDate,
+      dataItem, shortDesc, gmc, lsid, area, description, familyId, queryDate, weeksOpen, resolutionDate,
       escalation) <>((Issue.apply _).tupled, Issue.unapply)
 
   }

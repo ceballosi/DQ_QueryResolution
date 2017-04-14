@@ -5,8 +5,8 @@ import java.time.{LocalDate, ZoneId}
 import java.util.Date
 import javax.inject.{Inject, Singleton}
 
-import dao.{SearchCriteria, IssueTrackingDao}
 import dao.Searching.{SearchRequest, SearchResult}
+import dao.{IssueTrackingDao, SearchCriteria}
 import domain._
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.{Logger, LoggerFactory}
@@ -15,8 +15,7 @@ import purecsv.safe.converter.StringConverter
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ExecutionContext, Future}
-import scala.io.Source
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 trait IssueTrackingService {
   def allIssues: Future[Seq[Issue]]
@@ -39,32 +38,10 @@ trait IssueTrackingService {
 }
 
 @Singleton
-class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, validator: ImportValidator)(implicit ec: ExecutionContext) extends IssueTrackingService {
+class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, validator: IssueImportValidator)(implicit ec: ExecutionContext) extends IssueTrackingService {
 
   val log: Logger = LoggerFactory.getLogger(this.getClass())
 
-
-  //PureCSV custom Date converter
-  implicit val dateStringConverter = new StringConverter[Date] {
-    override def tryFrom(str: String): Try[Date] = {
-      Try(ISODateTimeFormat.dateTimeParser().parseDateTime(str).toDate)
-    }
-
-    override def to(date: Date): String = {
-      ISODateTimeFormat.dateTime().print(date.getTime)
-    }
-  }
-
-  //PureCSV custom Status converter
-  implicit val statusStringConverter = new StringConverter[Status] {
-    override def tryFrom(str: String): Try[Status] = {
-      Try(Status.validStatuses.find(_.toString == str).get)
-    }
-
-    override def to(status: Status): String = {
-      status.toString
-    }
-  }
 
 
   def findBySearchRequest(searchRequest: SearchRequest) : Future[SearchResult[Issue]] =  {
@@ -80,7 +57,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
     //    id.map(x => println("service next x=" + x))   // x is correct nextVal
 //    println("service next id=" + id)
 
-    println(nextIssueId("RRR"))
+    println(issueTrackingDao.nextIssueId("RRR"))
     issueTrackingDao.findBySearchRequest(searchRequest)
   }
 
@@ -113,16 +90,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
     issues
   }
 
-  def nextIssueId(gmc: String) : Future[String] =  {
-    val start = System.currentTimeMillis()
-    val startTime = System.nanoTime()
-    val fullId: Future[String] = issueTrackingDao.nextIssueId.map(id => f"${gmc}%s-${id}%07d")
-    fullId.map(println)
-    val estimatedTime = System.nanoTime() - startTime
-    val elapsed = System.currentTimeMillis() - start
-    println(s"elapsed=$elapsed  estimatedTime=$estimatedTime")
-    fullId
-  }
+
 
   def allQc: Future[Seq[QueryChain]] = ???
 //  def allQc: Future[Seq[QueryChain]] = {
@@ -149,30 +117,20 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
 
 
   def importFile(file: File): List[(Int, Throwable)] = {
-    import purecsv.safe._
-    import purecsv.safe.tryutil._
 
-    val fileContent = Source.fromFile(file).mkString
-    val result = CSVReader[Issue].readCSVFromString(fileContent)
+    val (successes, failures) = validator.parseCsv(file: File)
+    val totalIssues = successes.length + failures.length
 
-    //TODO - add stronger validation on issue import e.g format of issue-id, and required fields
-    // e.g. copy successes via another validating constructor?
-    val (successes: List[(Int, Issue)], failures: List[(Int, Throwable)]) = result.getSuccessesAndFailures
-    if (failures.size > 0) {
-      log.error(s"Import File ${file.getName}, ${failures.length} FAILURES" )
-      failures.foreach(println)
-    }
+    //pre-populate successes with defaults
+    val validationCandidates = validator.populateDefaults(successes)
 
-    val (caseSuccesses: List[(Int, Issue)], caseFailures: List[(Int, Throwable)]) = validator.validate(successes)
+    //TODO - validate date (& status? or not reqd)
+    val (passes,fails) = validator.validateIssues(validationCandidates)
 
-    //acummulate & count successes & report
-    if (successes.size > 0) {
-      log.info(s"Import File ${file.getName}, ${successes.length} successes" )
-    }
 
     var mutableFailures: mutable.Buffer[(Int, Throwable)] = failures.toBuffer
     //get 2nd set of failures from import  into db
-    successes.map { case (idx, issue) =>
+    passes.map { case (idx, issue) =>
       val result = Try {
 //        issueTrackingDao.insert(issue)
       }
@@ -181,9 +139,17 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
         mutableFailures += ((idx, e))
       }
     }
-    //return both sets of failures sorted/merged by row number
-    mutableFailures ++ failures
-    mutableFailures.sortBy(_._1).toList
+    //return all failures sorted/merged by row number
+    mutableFailures = mutableFailures ++ fails
+    val allFails: List[(Int, Throwable)] = mutableFailures.sortBy(_._1).toList
+
+    log.info(s"Import File ${file.getName}, ${totalIssues - allFails.length} successes")
+    log.error(s"Import File ${file.getName}, ${allFails.length} FAILURES")
+
+    if (allFails.size > 0) {
+      allFails.foreach(fail => log.error(fail.toString()))
+    }
+    allFails
   }
 
 
@@ -227,7 +193,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
     val r = new Random
     val statuses = Status.validStatuses
     val gmcList = List("RRK", "RGT", "RJ1", "RW3", "RTD", "RP4", "REP", "RTH", "RHM", "RH8", "RYJ", "RA7", "RHQ", "NI1")
-    val priorityList = List(0,0,0,0,0,0,0,0,0,1)
+    val priorityList = List(2,2,2,2,2,2,2,2,2,1) //fasttrack is 1 in 10
     val dataSourceList = List("ServiceDesk", "DataQuality", "RedTeam", "Informatics", "BioInformatics")
     val dataItemList = List("Gender", "FamilyId", "DOB", "Excision Margin", "Biological Relationship to Proband")
     val shortDescList = List("missing", "bad data", "incorrect entry", "invalid", "re-submission", "out of range")
@@ -247,10 +213,10 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
       1,
       "Group size",
       "Some desc",
-      "Issue with family group size: Please see 'Group Issues' tab for more details and potential resolutions",
       "RIP",
       Some(("lsid"+ r.nextInt(1000) + 110000000).toString),
       "RD",
+      "Issue with family group size: Please see 'Group Issues' tab for more details and potential resolutions",
       None,
       None,
       None,
