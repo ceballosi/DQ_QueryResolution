@@ -108,6 +108,15 @@ footer {
 .ok-default {
     background-color: #C0DAB5;
 }
+.archived-default {
+    background-color: #747474;
+}
+.responded-default {
+    background-color: #EBC06D;
+}
+.resolved-default {
+    background-color: #C0DAB5;
+}
 .failure-default {
     background-color: #ebccd1;
 }

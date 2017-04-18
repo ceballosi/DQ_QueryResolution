@@ -172,17 +172,31 @@ function statusChangeDialog(e) {
             }
         }, {
             label: 'Open',
-            cssClass: 'ok-default',
+            cssClass: 'failure-default',
             action: function(dialogItself){
                 dialogItself.close();
                 statusChangeConfirm("Open");
             }
         }, {
-            label: 'Closed',
-            cssClass: 'failure-default',
+            label: 'Responded',
+            cssClass: 'responded-default',
             action: function(dialogItself){
                 dialogItself.close();
-                statusChangeConfirm("Closed");
+                statusChangeConfirm("Responded");
+            }
+        }, {
+            label: 'Resolved',
+            cssClass: 'ok-default',
+            action: function(dialogItself){
+                dialogItself.close();
+                statusChangeConfirm("Resolved");
+            }
+        }, {
+            label: 'Archived',
+            cssClass: 'archived-default',
+            action: function(dialogItself){
+                dialogItself.close();
+                statusChangeConfirm("Archived");
                 statusDialog.close();
             }
         }]

@@ -8,14 +8,13 @@ import javax.inject.{Inject, Singleton}
 import dao.Searching.{SearchRequest, SearchResult}
 import dao.{IssueTrackingDao, SearchCriteria}
 import domain._
-import org.joda.time.format.ISODateTimeFormat
+import scala.concurrent.duration._
 import org.slf4j.{Logger, LoggerFactory}
-import purecsv.safe.converter.StringConverter
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.util.{Try}
 
 trait IssueTrackingService {
   def allIssues: Future[Seq[Issue]]
@@ -27,7 +26,8 @@ trait IssueTrackingService {
   def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[Issue]]
   def importFile(file: File): List[(Int, Throwable)]
   def changeStatus(newStatus: Status, issueIds: List[String]): Future[List[(String, Throwable)]]
-  //TODO : To be removed (temporary method to create a table and populate data)
+  def changeStatusInd(newStatus: Status, issueIds: List[String]): Future[List[(String, Throwable)]]
+    //TODO : To be removed (temporary method to create a table and populate data)
   def tmpMethod: Future[Unit]
 
   def allQc: Future[Seq[QueryChain]]
@@ -176,6 +176,44 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
     }
 
     Future(failures.toList)
+  }
+
+
+
+  def changeStatusInd(newStatus: Status, issueIds: List[String]): Future[List[(String, Throwable)]] = {
+    val failures = new ListBuffer[(String, Throwable)]
+
+    findIssuesInOrder(issueIds).foreach { issue =>
+      if(!issueTrackingDao.changeStatusInd(newStatus, issue)) {
+        failures += ((issue.issueId, new Exception("changeStatus failed")))
+      }
+    }
+
+    Future(failures.toList)
+  }
+
+
+  def findIssuesInOrder(issueIds: List[String]): List[Issue] = {
+    val orderedIssues = ListBuffer[Issue]()
+
+    //split into 2 methods find issues with exception handling & iterate/change with error handling
+    var issues = Seq[Issue]()
+    val findResult: Try[SearchResult[Issue]] = Await.ready(findByIssueIds(issueIds), 30 seconds).value.get
+
+    findResult match {
+      case scala.util.Success(searchResult) => issues = searchResult.items
+      case scala.util.Failure(e) => {
+        log.error("error finding issues " + e.toString)
+        throw e
+      }
+    }
+
+    // re-order to match the request order, allows errors to be viewed in order
+    issueIds.foreach { issueId =>
+      val foundIssue = issues.find(_.issueId == issueId)
+      orderedIssues += foundIssue.getOrElse(null)
+    }
+    orderedIssues.toList
   }
 
 

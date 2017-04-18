@@ -6,12 +6,15 @@ import javax.inject.{Inject, Singleton}
 import dao.DaoUtils._
 import dao.Searching.{SearchRequest, SearchResult}
 import domain._
+import org.slf4j.{Logger, LoggerFactory}
 import play.api.db.slick.DatabaseConfigProvider
 import slick.driver.JdbcProfile
 import slick.lifted.{ColumnOrdered, ProvenShape}
 
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.util.Try
 
 trait IssueTrackingDao extends BaseDao[Issue, Long] {
   def listGmcs: Future[Seq[String]]
@@ -20,7 +23,8 @@ trait IssueTrackingDao extends BaseDao[Issue, Long] {
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]]
   def findByCriteria(cr : SearchCriteria): Future[Seq[Issue]]
   def changeStatus(newStatus: Status, issue: Issue): Future[Unit]
-  // TODO To be removed
+  def changeStatusInd(newStatus: Status, issue: Issue): Boolean
+    // TODO To be removed
   def tableSetup(data: Seq[Issue])
   def findAllJoin: Future[Seq[(String,String,String)]]
 
@@ -36,6 +40,8 @@ trait IssueTrackingDao extends BaseDao[Issue, Long] {
 @Singleton
 class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(implicit ec: ExecutionContext)
   extends IssueTrackingDao {
+  val log: Logger = LoggerFactory.getLogger(this.getClass())
+
   //JdbcProfile for this provider
   val dbConfig = dbConfigProvider.get[JdbcProfile]
   // To bring db in to the current scope
@@ -149,7 +155,6 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
       // to bulk insert our sample data
       loggedIssues ++= data
     ))
-    import scala.concurrent.duration._
     Await.result(g, 30 seconds)
   }
 
@@ -177,29 +182,44 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     )
   }
 
+
   def changeStatus(newStatus: Status, issue: Issue): Future[Unit] = {
-//    Future {
-//      if (issue.issueId.contains("0001")) {
-//        throw new Exception("blow up " + issue.issueId)
-//      }
-//      }
     db.run(
       loggedIssues.filter( _.issueId === issue.issueId).map(iss => (iss.status)) update (newStatus)
     )
     Future(println(issue))
   }
-//  db.run(
-//    loggedIssues.filter( _.issueId === issue.issueId).map(iss => (iss.status)) update (newStatus)
-//  ).recover{
-//    ex: Throwable => ex
-//  }
+
+  def changeStatusInd(newStatus: Status, issue: Issue): Boolean = {
+
+    val updateQuery = loggedIssues.filter(_.issueId === issue.issueId).map(iss => (iss.status)) update (newStatus)
+
+    val futureResult: Try[Int] = Await.ready(db.run(updateQuery), 30 seconds).value.get
+
+    val isSuccess = futureResult match {
+      case scala.util.Success(numRows) => {
+        if (numRows > 0) true           // relies on numRows changed to determine success/fail
+        else false
+      }
+      case scala.util.Failure(e) => {
+        log.error(s"issue ${issue.issueId} changeStatus error " + e.toString)
+        false
+      }
+    }
+
+    isSuccess
+  }
+
+
 
   def findById(id: Long): Future[Option[Issue]] = db.run(loggedIssues.filter(_.id === id).result.headOption)
 
 
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]] = {
 
-    val query = loggedIssues.filter(_.issueId inSetBind issueIds ).sortBy(issue => (issue.dateLogged.desc,issue.gmc))
+    //sorting may not be needed...but input order does seem to be destroyed
+//    val query = loggedIssues.filter(_.issueId inSetBind issueIds ).sortBy(issue => (issue.dateLogged.desc,issue.gmc))
+    val query = loggedIssues.filter(_.issueId inSetBind issueIds )
 
     val issuesFuture = db.run(
       query.result
