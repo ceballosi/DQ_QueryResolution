@@ -22,6 +22,8 @@ trait IssueTrackingDao extends BaseDao[Issue, Long] {
   def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[Issue]]
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]]
   def findByCriteria(cr : SearchCriteria): Future[Seq[Issue]]
+  def updateQueryDate(newDate: Date, issue: Issue): Future[Int]
+  def updateResolutionDate(newDate: Date, issue: Issue): Future[Int]
   def changeStatus(newStatus: Status, issue: Issue): Future[Unit]
   def changeStatusInd(newStatus: Status, issue: Issue): Boolean
     // TODO To be removed
@@ -175,7 +177,23 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     db.run(query.result)
   }
 
-  def update(o: Issue): Future[Unit] = ???
+  def update(issue: Issue): Future[Int] = {
+    db.run(
+      loggedIssues.filter( _.issueId === issue.issueId) update (issue)
+    )
+  }
+
+  def updateQueryDate(newDate: Date, issue: Issue): Future[Int] = {
+    db.run(
+      loggedIssues.filter( _.issueId === issue.issueId).map(iss => (iss.queryDate)) update (Some(newDate))
+    )
+  }
+
+  def updateResolutionDate(newDate: Date, issue: Issue): Future[Int] = {
+    db.run(
+      loggedIssues.filter( _.issueId === issue.issueId).map(iss => (iss.resolutionDate)) update (Some(newDate))
+    )
+  }
 
   def insert(issue: Issue) = {
     db.run(

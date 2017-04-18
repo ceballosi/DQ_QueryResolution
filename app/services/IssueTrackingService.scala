@@ -186,6 +186,8 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
     findIssuesInOrder(issueIds).foreach { issue =>
       if(!issueTrackingDao.changeStatusInd(newStatus, issue)) {
         failures += ((issue.issueId, new Exception("changeStatus failed")))
+      } else {
+        updateDatesOnly(newStatus, issue)
       }
     }
 
@@ -214,6 +216,19 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
       orderedIssues += foundIssue.getOrElse(null)
     }
     orderedIssues.toList
+  }
+
+
+  def updateDatesOnly(newStatus: Status, issue: Issue) = {
+    newStatus match {
+      case Open => {
+        issueTrackingDao.updateQueryDate(new Date(), issue)
+      }
+      case Resolved => {
+        issueTrackingDao.updateResolutionDate(new Date(), issue)
+      }
+      case _ =>
+    }
   }
 
 

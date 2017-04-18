@@ -51,7 +51,8 @@ function loadIssues() {
             'copy', 'excel', 'pdf'
         ],
         "createdRow": function (row, data, index) {
-            $('td', row).eq(9).html(data.gmc + "<span class='pull-right glyphicon glyphicon-th-list'></span>");
+            //Qchain
+            //$('td', row).eq(9).html(data.gmc + "<span class='pull-right glyphicon glyphicon-th-list'></span>");
         }
     });
 }
@@ -524,9 +525,10 @@ $(document).ready(function () {
         }
     });
 
-    $(document ).on( "click", "TD.qchain", function() {
-        displayQChain(this);
-    });
+    //Qchain
+    //$(document ).on( "click", "TD.qchain", function() {
+    //    displayQChain(this);
+    //});
 
 });
 

@@ -14,7 +14,7 @@ trait BaseDao[T, U] {
 
   def findById(id: U): Future[Option[T]]
 
-  def update(o: T): Future[Unit]
+  def update(o: T): Future[Int]
 
   def insert(o: T)
 
