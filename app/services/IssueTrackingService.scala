@@ -259,6 +259,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
       None,
       None,
       None,
+      None,
       None
     )
 
@@ -272,7 +273,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
       val dateCreated = randomDateBetween(LocalDate.of(2016, 12, 1), LocalDate.now().minusDays(3))
 
       val lsidList = List(null,"lsid" + "%05d".format(x))
-      var familyOption: Option[Int] = Some(x)
+      var familyOption: Option[String] = Some(x.toString)
       if (x % 5 != 0) {
         familyOption = None
       }

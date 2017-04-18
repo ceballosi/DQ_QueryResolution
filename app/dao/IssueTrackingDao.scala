@@ -83,7 +83,8 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     "queryDate" -> { (t: IssueTable) => t.queryDate},
     "resolutionDate" -> { (t: IssueTable) => t.resolutionDate},
     "weeksOpen" -> { (t: IssueTable) => t.weeksOpen},
-    "escalation" -> { (t: IssueTable) => t.escalation}
+    "escalation" -> { (t: IssueTable) => t.escalation},
+    "notes" -> { (t: IssueTable) => t.notes}
   )
 
   //next issue id from separate explicit db sequence - issueid_id_seq
@@ -194,7 +195,7 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
     val updateQuery = loggedIssues.filter(_.issueId === issue.issueId).map(iss => (iss.status)) update (newStatus)
 
-    val futureResult: Try[Int] = Await.ready(db.run(updateQuery), 30 seconds).value.get
+    val futureResult: Try[Int] = Await.ready(db.run(updateQuery.transactionally), 30 seconds).value.get
 
     val isSuccess = futureResult match {
       case scala.util.Success(numRows) => {
@@ -295,7 +296,7 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
     def description = column[String]("description")
 
-    def familyId = column[Option[Int]]("family_id")
+    def familyId = column[Option[String]]("family_id")
 
     def queryDate = column[Option[Date]]("query_date")
 
@@ -305,10 +306,12 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
     def escalation = column[Option[Date]]("escalation")
 
+    def notes = column[Option[String]]("notes")
+
 
     override def * : ProvenShape[Issue] = (id, issueId, status, dateLogged, participantId, dataSource, priority,
       dataItem, shortDesc, gmc, lsid, area, description, familyId, queryDate, weeksOpen, resolutionDate,
-      escalation) <>((Issue.apply _).tupled, Issue.unapply)
+      escalation, notes) <>((Issue.apply _).tupled, Issue.unapply)
 
   }
 

@@ -17,7 +17,7 @@ object DatatablesRequestBuilder {
   val log: Logger = LoggerFactory.getLogger(this.getClass())
 
   //needs to be kept in sync with ui
-  private val uiColumnNames: List[String] = List("select/checkbox", "DT_RowId", "status", "dateLogged", "participantId", "dataSource", "priority", "dataItem", "shortDesc", "gmc", "lsid", "area", "description", "familyId", "queryDate", "weeksOpen", "resolutionDate", "escalation", "participantId")
+  private val uiColumnNames: List[String] = List("select/checkbox", "DT_RowId", "status", "dateLogged", "participantId", "dataSource", "priority", "dataItem", "shortDesc", "gmc", "lsid", "area", "description", "familyId", "queryDate", "weeksOpen", "resolutionDate", "escalation", "notes")
 
   //support both get & post by taking the param map
   def build(request: Map[String, Seq[String]]): SearchRequest = {

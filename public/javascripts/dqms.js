@@ -31,7 +31,8 @@ function loadIssues() {
             {"data": "queryDate"},
             {"data": "weeksOpen"},
             {"data": "resolutionDate"},
-            {"data": "escalation"}
+            {"data": "escalation"},
+            {"data": "notes"},
         ],
         columnDefs: [ {
             orderable: false,
@@ -162,7 +163,7 @@ function sendSelected(e) {
 function statusChangeDialog(e) {
     var statusDialog = new BootstrapDialog({
         title: 'Change Status',
-        message: 'Select new status for selected issues',
+        message: 'Choose new status for selected issues',
         buttons: [{
             label: 'Draft',
             cssClass: 'btn-confirm',

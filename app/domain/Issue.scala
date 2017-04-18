@@ -19,11 +19,12 @@ case class Issue(//18 fields (out of possible 22!)
                  lsid: Option[String],
                  area: String,
                  description: String,
-                 familyId: Option[Int],
+                 familyId: Option[String],
                  queryDate: Option[Date],
                  weeksOpen: Option[Int],
                  resolutionDate: Option[Date],
-                 escalation: Option[Date]
+                 escalation: Option[Date],
+                 notes: Option[String]
                 ) {
 
   def toCsvForUI(): String = {
@@ -35,7 +36,7 @@ case class Issue(//18 fields (out of possible 22!)
     val resolvedDt = Issue.dateToIsoStr(resolutionDate)
     val escalateDt = Issue.dateToIsoStr(escalation)
 
-    s"$issueId,$status,$dateLoggedStr,$participantId,$dataSource,$priority,$dataItem,$shortDesc,$gmc,$lsidStr,$area,$description,$family,$querySent,$weeks,$resolvedDt,$escalateDt"
+    s"$issueId,$status,$dateLoggedStr,$participantId,$dataSource,$priority,$dataItem,$shortDesc,$gmc,$lsidStr,$area,$description,$family,$querySent,$weeks,$resolvedDt,$escalateDt,$notes"
   }
 }
 
@@ -48,6 +49,7 @@ object Issue {
         "DT_RowId" -> Json.toJson(c.issueId),
         "status" -> c.status.toString,
         "dateLogged" -> dateToStr(c.dateLogged),
+        "participantId" -> Json.toJson(c.participantId),
         "dataSource" -> Json.toJson(c.dataSource),
         "priority" -> Json.toJson(c.priority),
         "dataItem" -> Json.toJson(c.dataItem),
@@ -61,12 +63,12 @@ object Issue {
         "weeksOpen" -> Json.toJson(c.weeksOpen),
         "resolutionDate" -> dateToStr(c.resolutionDate),
         "escalation" -> dateToStr(c.escalation),
-        "participantId" -> Json.toJson(c.participantId)
+        "notes" -> Json.toJson(c.notes)
       )
     }
   }
 
-  def csvHeaderForUI(): String = "IssueId,Status,Date Logged,ParticipantId,Data Source,Priority,Data Item,Short Desc,GMC,LSID,Therapeutic Area,Description,FamilyId,Query Date,Weeks Open,Resolution Date,Escalation"
+  def csvHeaderForUI(): String = "IssueId,Status,Date Logged,ParticipantId,Data Source,Priority,Data Item,Short Desc,GMC,LSID,Therapeutic Area,Description,FamilyId,Query Date,Weeks Open,Resolution Date,Escalation,Notes"
 
   def dateToStr(date: Option[Date]): String = {
     date match {
