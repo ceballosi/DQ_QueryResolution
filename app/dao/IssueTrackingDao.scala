@@ -24,8 +24,7 @@ trait IssueTrackingDao extends BaseDao[Issue, Long] {
   def findByCriteria(cr : SearchCriteria): Future[Seq[Issue]]
   def updateQueryDate(newDate: Date, issue: Issue): Future[Int]
   def updateResolutionDate(newDate: Date, issue: Issue): Future[Int]
-  def changeStatus(newStatus: Status, issue: Issue): Future[Unit]
-  def changeStatusInd(newStatus: Status, issue: Issue): Boolean
+  def changeStatus(newStatus: Status, issue: Issue): Boolean
     // TODO To be removed
   def tableSetup(data: Seq[Issue])
   def findAllJoin: Future[Seq[(String,String,String)]]
@@ -195,25 +194,52 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     )
   }
 
-  def insert(issue: Issue) = {
-    db.run(
-      loggedIssues += issue
-    )
+  def insert(issue: Issue): (Boolean, String) = {
+
+//    testing only
+//    var issue: Issue = null
+//    if (nissue.issueId.contains("02") || nissue.issueId.contains("01")) {
+//      println("blowing for " + nissue.issueId)
+//      issue = nissue.copy(issueId = null)
+//
+//    } else {
+//      issue = nissue.copy()
+//    }
+
+    val insertQuery = loggedIssues += issue
+    val futureResult: Try[Int] = Await.ready(db.run(insertQuery), 30 seconds).value.get
+
+    val result = futureResult match {
+      case scala.util.Success(numRows) => {
+        if (numRows > 0) (true,"")
+        else {
+          val msg: String = s"insert db failed"
+          log.error(msg)
+          (false, msg)
+        }
+      }
+      case scala.util.Failure(ex) => {
+        val msg: String = s"insert db error ex=" + ex.toString
+        log.error(msg)
+        (false, msg)
+      }
+    }
+    result
   }
 
 
-  def changeStatus(newStatus: Status, issue: Issue): Future[Unit] = {
-    db.run(
-      loggedIssues.filter( _.issueId === issue.issueId).map(iss => (iss.status)) update (newStatus)
-    )
-    Future(println(issue))
-  }
+  def changeStatus(newStatus: Status, issue: Issue): Boolean = {
 
-  def changeStatusInd(newStatus: Status, issue: Issue): Boolean = {
+//    testing only
+//    var nnewStatus = newStatus
+//    if (issue.issueId.contains("00001") || issue.issueId.contains("00023")) {
+//      println("blowing for " + issue.issueId)
+//      nnewStatus = null
+//    }
 
     val updateQuery = loggedIssues.filter(_.issueId === issue.issueId).map(iss => (iss.status)) update (newStatus)
 
-    val futureResult: Try[Int] = Await.ready(db.run(updateQuery.transactionally), 30 seconds).value.get
+    val futureResult: Try[Int] = Await.ready(db.run(updateQuery), 30 seconds).value.get
 
     val isSuccess = futureResult match {
       case scala.util.Success(numRows) => {

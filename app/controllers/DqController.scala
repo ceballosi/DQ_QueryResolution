@@ -143,29 +143,24 @@ class DqController @Inject()(issueTracking: IssueTrackingService, mailService: M
 
 
 
-
   def changeStatus = Action.async(parse.multipartFormData) { implicit req =>
     val result = Try {
 
       val body: Map[String, Seq[String]] = req.body.dataParts
 
       val selected = param(body, "selectedIssues").get
-      log.debug(s"selected issues=$selected")
       val issueIds = selected.split(",").toList
 
       val change = param(body, "change").get
-      log.debug(s"change newStatus=$change")
       val newStatus = domain.Status.allStatuses.find(_.toString == change).get
-      log.debug(s"newStatus=$newStatus")
+      log.debug(s"selected issues=$selected change=$change newStatus=$newStatus")
 
       val failures: Future[List[(String, Throwable)]] = issueTracking.changeStatus(newStatus,issueIds)
 
       val eventualResult: Future[Result] = failures.map { failed => {
-        println("failed.length=" + failed.length)
-        println("failed=" + failed)
         if (failed.isEmpty == 0) Ok("OK")
         else {
-          //          Future(Ok(failuresToJsonIssueIds(failed)))
+          log.error("failed.length=" + failed.length)
           Ok(failuresToJsonIssueIds(failed))
         }
       }
@@ -178,7 +173,6 @@ class DqController @Inject()(issueTracking: IssueTrackingService, mailService: M
       Future(Ok("Change Status failed"))
     }
   }
-
 
   def reportsWorks = Action { implicit req =>
     val findResult: Future[Seq[QueryChain]] = issueTracking.allQc
@@ -205,7 +199,6 @@ class DqController @Inject()(issueTracking: IssueTrackingService, mailService: M
       case Failure(e) => {e.printStackTrace}
     }
 
-//    Ok(Json.toJson("printed chains?"))
     Ok(reportsToJson(null))
   }
 
@@ -238,40 +231,5 @@ class DqController @Inject()(issueTracking: IssueTrackingService, mailService: M
     }
   }
 
-
-
-  def changeStatusInd = Action.async(parse.multipartFormData) { implicit req =>
-    val result = Try {
-
-      val body: Map[String, Seq[String]] = req.body.dataParts
-
-      val selected = param(body, "selectedIssues").get
-      log.debug(s"selected issues=$selected")
-      val issueIds = selected.split(",").toList
-
-      val change = param(body, "change").get
-      log.debug(s"change newStatus=$change")
-      val newStatus = domain.Status.allStatuses.find(_.toString == change).get
-      log.debug(s"newStatus=$newStatus")
-
-      val failures: Future[List[(String, Throwable)]] = issueTracking.changeStatusInd(newStatus,issueIds)
-
-      val eventualResult: Future[Result] = failures.map { failed => {
-        println("failed.length=" + failed.length)
-        println("failed=" + failed)
-        if (failed.isEmpty == 0) Ok("OK")
-        else {
-          Ok(failuresToJsonIssueIds(failed))
-        }
-      }
-      }
-      eventualResult
-    }
-    result.getOrElse {
-      val e: Throwable = result.failed.get
-      log.error(s"Change Status failed ${e.getMessage}\n" + e.getStackTrace.mkString("\n"))
-      Future(Ok("Change Status failed"))
-    }
-  }
 
 }

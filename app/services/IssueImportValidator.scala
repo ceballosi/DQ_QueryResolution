@@ -119,15 +119,14 @@ class IssueImportValidator @Inject()(issueTrackingDao: IssueTrackingDao)(implici
       v => errors += Descriptions.render(v.description)
     }
 
-    //    val allErrors: String = errors.mkString("",",","")
     val allErrors: String = errors.mkString(",")
     allErrors
   }
 
-  //Yuk
+  //Yuk - wix.accord should have date valdn but doesn't work - may do next release?
   def additionalValidation(candidate: (Int, Issue), resultTuple: (Boolean, String)): (Boolean, String) = {
 
-    var issue = candidate._2
+    val issue = candidate._2
     val date = issue.dateLogged
     var booleanResult = resultTuple._1
     var errs = ListBuffer(resultTuple._2)

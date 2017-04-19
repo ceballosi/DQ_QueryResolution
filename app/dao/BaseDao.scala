@@ -16,7 +16,7 @@ trait BaseDao[T, U] {
 
   def update(o: T): Future[Int]
 
-  def insert(o: T)
+  def insert(o: T): (Boolean, String)
 
   // To get Table functional relational mapping (FRM) for the DAO
   def toTable: TableQuery[_]

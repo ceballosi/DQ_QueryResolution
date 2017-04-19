@@ -15,8 +15,7 @@ GET         /export               controllers.DqController.export
 GET         /send                 controllers.DqController.sendNotifications
 GET         /reports              controllers.DqController.reports
 POST        /upload               controllers.DqController.upload
-POST        /status               controllers.DqController.changeStatusInd
-#POST        /status               controllers.DqController.changeStatus
+POST        /status               controllers.DqController.changeStatus
 POST        /querychain           controllers.DqController.queryChain
 
 # Map static resources from the /public folder to the /assets URL path

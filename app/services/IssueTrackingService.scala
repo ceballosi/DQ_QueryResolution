@@ -26,7 +26,6 @@ trait IssueTrackingService {
   def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[Issue]]
   def importFile(file: File): List[(Int, Throwable)]
   def changeStatus(newStatus: Status, issueIds: List[String]): Future[List[(String, Throwable)]]
-  def changeStatusInd(newStatus: Status, issueIds: List[String]): Future[List[(String, Throwable)]]
     //TODO : To be removed (temporary method to create a table and populate data)
   def tmpMethod: Future[Unit]
 
@@ -45,19 +44,6 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
 
 
   def findBySearchRequest(searchRequest: SearchRequest) : Future[SearchResult[Issue]] =  {
-//    val id: Future[Int] = issueTrackingDao.nextIssueId
-
-//    id.onComplete{
-//      case Success(idResult) => {
-//        println("service next id vector=" + idResult)
-//      }
-//      case Failure(e) => {e.printStackTrace}
-//    }
-
-    //    id.map(x => println("service next x=" + x))   // x is correct nextVal
-//    println("service next id=" + id)
-
-    println(issueTrackingDao.nextIssueId("RRR"))
     issueTrackingDao.findBySearchRequest(searchRequest)
   }
 
@@ -116,27 +102,29 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
   }
 
 
+  //import is done in 3 stages, catching and accumulating failures at each and only passing successful issues to the next
+  //1. parse CSV to issue case class (checks fields are correct types)
+  //2. validate import fields (values, date ranges,gmcs)
+  //3. db insert
   def importFile(file: File): List[(Int, Throwable)] = {
 
+    //1. parse CSV
     val (successes, failures) = validator.parseCsv(file: File)
     val totalIssues = successes.length + failures.length
 
     //pre-populate successes with defaults
     val validationCandidates = validator.populateDefaults(successes)
 
-    //TODO - validate date (& status? or not reqd)
+    //2. validate import fields
     val (passes,fails) = validator.validateIssues(validationCandidates)
 
 
     var mutableFailures: mutable.Buffer[(Int, Throwable)] = failures.toBuffer
-    //get 2nd set of failures from import  into db
+    //3. db insert
     passes.map { case (idx, issue) =>
-      val result = Try {
-//        issueTrackingDao.insert(issue)
-      }
-      result.getOrElse {
-        val e: Throwable = result.failed.get
-        mutableFailures += ((idx, e))
+      val dbResult: (Boolean, String) = issueTrackingDao.insert(issue)
+      if(!dbResult._1) {
+        mutableFailures += ((idx, new Exception(dbResult._2)))
       }
     }
     //return all failures sorted/merged by row number
@@ -153,38 +141,13 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
   }
 
 
+
+
   def changeStatus(newStatus: Status, issueIds: List[String]): Future[List[(String, Throwable)]] = {
     val failures = new ListBuffer[(String, Throwable)]
 
-    val findResult: Future[SearchResult[Issue]] = findByIssueIds(issueIds)
-
-
-    findResult.map { searchResult =>
-      searchResult.items.map { issue =>
-
-        val result = Try {
-          //TODO - implement allowable state change logic before performing actual update
-          issueTrackingDao.changeStatus(newStatus, issue)
-        }
-        result.getOrElse {
-          val e: Throwable = result.failed.get
-          failures += ((issue.issueId, e))
-          println("svc=" + issue)
-        }
-
-      }
-    }
-
-    Future(failures.toList)
-  }
-
-
-
-  def changeStatusInd(newStatus: Status, issueIds: List[String]): Future[List[(String, Throwable)]] = {
-    val failures = new ListBuffer[(String, Throwable)]
-
     findIssuesInOrder(issueIds).foreach { issue =>
-      if(!issueTrackingDao.changeStatusInd(newStatus, issue)) {
+      if(!issueTrackingDao.changeStatus(newStatus, issue)) {
         failures += ((issue.issueId, new Exception("changeStatus failed")))
       } else {
         updateDatesOnly(newStatus, issue)
@@ -305,9 +268,17 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
 
       val escalation = org.joda.time.LocalDate.fromDateFields(dateCreated).plusDays(14).toDate
 
+      var nextIssueId: String = ""
+
+      val result: Try[String] = Await.ready(issueTrackingDao.nextIssueId(randGmc), 30 seconds).value.get
+      result match {
+        case scala.util.Success(nextId) => nextIssueId = nextId
+        case scala.util.Failure(e) => log.error(e.toString)
+      }
+
       val c = data.copy(
         gmc = randGmc,
-        issueId = randGmc + "-" + "%07d".format(x),
+        issueId = nextIssueId,
         status = statusChosen,
         dateLogged = dateCreated,
         participantId = r.nextInt(1000) + 110000000,
