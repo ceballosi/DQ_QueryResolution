@@ -5,7 +5,7 @@ import java.util.Date
 import org.joda.time.format.ISODateTimeFormat
 import play.api.libs.json._
 
-case class Issue(//18 fields (out of possible 22!)
+case class Issue(//19 fields (out of possible 22!)
                  id: Long,
                  issueId: String,
                  status: Status,

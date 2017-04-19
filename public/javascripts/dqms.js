@@ -500,6 +500,11 @@ $(document).ready(function () {
         filterTable(tableIssues, url, e);
     });
 
+    $("#addButton").click(function (e) {
+        $("#addModal").modal({backdrop: 'static'});
+        $("#addModal").modal('show');
+    });
+
     $("#sendButton").click(function (e) {
         sendSelected(e);
     });
@@ -530,6 +535,7 @@ $(document).ready(function () {
     //    displayQChain(this);
     //});
 
+    //$("#addButton").click();
 });
 
 

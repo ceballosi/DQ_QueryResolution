@@ -1,0 +1,115 @@
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog .modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h5 class="modal-title">New Issue Details</h5>
+            </div>
+            <div class="modal-body">
+                <form id="addForm" role="form">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="addIssueId">Issue Id</label>
+                            <input type="text" class="form-control input-sm" id="addIssueId" name="issueId" placeholder="XXX-0000000" readonly required>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="addStatus">Status</label>
+                            <input type="text" class="form-control input-sm" id="addStatus" name="status" placeholder="Draft" readonly required>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="addDateLogged">Date Logged</label>
+                            <input type="datetime" class="form-control input-sm" id="addDateLogged" name="dateLogged" placeholder="dd/MM/yyyy" readonly required>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="addParticipant">Participant</label>
+                            <input type="number" class="form-control input-sm" id="addParticipant" name="participant" placeholder="1x0000xxx" required>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="addDataSource">Data Source</label>
+                            <input type="text" class="form-control input-sm" id="addDataSource" name="dataSource" placeholder="source of data/issue" required>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="addPriority">Priority</label>
+                            <input type="number" class="form-control input-sm" id="addPriority" name="priority" placeholder="1,2,..." required>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="addDataItem">Data Item</label>
+                            <input type="text" class="form-control input-sm" id="addDataItem" name="dataItem" placeholder="data field" required>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="addShortDesc">Short Desc</label>
+                            <input type="text" class="form-control input-sm" id="addShortDesc" name="shortDesc" placeholder="short description" required>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="addGMC">GMC</label>
+                            <input type="text" class="form-control input-sm" id="addGMC" name="gmc" placeholder="GMC" required>
+                        </div>
+                    </div>
+
+
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="addLSID">LSID</label>
+                            <input type="text" class="form-control input-sm" id="addLSID" name="lsid" placeholder="LSID" required>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="addArea">Therapeutic Area</label>
+                            <input type="text" class="form-control input-sm" id="addArea" name="area" placeholder="Cancer / RD" required>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="addFamilyId">Family Id</label>
+                            <input type="text" class="form-control input-sm" id="addFamilyId" name="familyId" placeholder="familyId" required>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="addDescription">Description</label>
+                        <textarea rows="2" class="form-control input-sm" id="addDescription" name="description" placeholder="description..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="addNotes">Notes</label>
+                        <textarea rows="2" class="form-control input-sm" id="addNotes" name="notes" placeholder="notes..."></textarea>
+                    </div>
+
+                    <div class="pull-right">
+                        <button type="button" class="btn btn-default" data-dismiss="modal" >Close</button>
+                            &nbsp;
+                        <button id="submit" type="submit" class="btn btn-primary dqmsButton" >Save 1</button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer"></div>
+        </div>
+    </div>
+</div>
