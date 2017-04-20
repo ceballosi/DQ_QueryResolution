@@ -6,7 +6,8 @@
                 <h5 class="modal-title">New Issue Details</h5>
             </div>
             <div class="modal-body">
-                <form id="addForm" role="form">
+                <form id="addForm" role="form"
+                    data-fv-framework="bootstrap">
                     <div class="col-sm-6">
                         <div class="form-group">
                             <label for="addIssueId">Issue Id</label>
@@ -30,14 +31,14 @@
                     <div class="col-sm-6">
                         <div class="form-group">
                             <label for="addParticipant">Participant</label>
-                            <input type="number" class="form-control input-sm" id="addParticipant" name="participant" placeholder="1x0000xxx" required>
+                            <input type="number" class="form-control input-sm" id="addParticipant" name="participant" placeholder="nnnnnnnnn" required>
                         </div>
                     </div>
 
                     <div class="col-sm-6">
                         <div class="form-group">
                             <label for="addDataSource">Data Source</label>
-                            <input type="text" class="form-control input-sm" id="addDataSource" name="dataSource" placeholder="source of data/issue" required>
+                            <input type="text" class="form-control input-sm" id="addDataSource" name="dataSource" placeholder="source of data/issue" maxlength="50" required>
                         </div>
                     </div>
 
@@ -51,21 +52,38 @@
                     <div class="col-sm-6">
                         <div class="form-group">
                             <label for="addDataItem">Data Item</label>
-                            <input type="text" class="form-control input-sm" id="addDataItem" name="dataItem" placeholder="data field" required>
+                            <input type="text" class="form-control input-sm" id="addDataItem" name="dataItem" placeholder="data field" maxlength="50" required>
                         </div>
                     </div>
 
                     <div class="col-sm-6">
                         <div class="form-group">
                             <label for="addShortDesc">Short Desc</label>
-                            <input type="text" class="form-control input-sm" id="addShortDesc" name="shortDesc" placeholder="short description" required>
+                            <input type="text" class="form-control input-sm" id="addShortDesc" name="shortDesc" placeholder="short description" maxlength="50" required>
                         </div>
                     </div>
 
                     <div class="col-sm-6">
-                        <div class="form-group">
+                        <div class="form-group form-group-sm">
                             <label for="addGMC">GMC</label>
-                            <input type="text" class="form-control input-sm" id="addGMC" name="gmc" placeholder="GMC" required>
+                            <select id="addGMC" class="form-control input-sm" required>
+                                <option value="">select</option>
+                                <option value="NI1">NI1</option>
+                                <option value="RA7">RA7</option>
+                                <option value="REP">REP</option>
+                                <option value="RGT">RGT</option>
+                                <option value="RH8">RH8</option>
+                                <option value="RHM">RHM</option>
+                                <option value="RHQ">RHQ</option>
+                                <option value="RIP">RIP</option>
+                                <option value="RJ1">RJ1</option>
+                                <option value="RP4">RP4</option>
+                                <option value="RRK">RRK</option>
+                                <option value="RTD">RTD</option>
+                                <option value="RTH">RTH</option>
+                                <option value="RW3">RW3</option>
+                                <option value="RYJ">RYJ</option>
+                            </select>
                         </div>
                     </div>
 
@@ -73,39 +91,39 @@
                     <div class="col-sm-6">
                         <div class="form-group">
                             <label for="addLSID">LSID</label>
-                            <input type="text" class="form-control input-sm" id="addLSID" name="lsid" placeholder="LSID" required>
+                            <input type="text" class="form-control input-sm" id="addLSID" name="lsid" placeholder="LSID" maxlength="50">
                         </div>
                     </div>
 
                     <div class="col-sm-6">
                         <div class="form-group">
                             <label for="addArea">Therapeutic Area</label>
-                            <input type="text" class="form-control input-sm" id="addArea" name="area" placeholder="Cancer / RD" required>
+                            <input type="text" class="form-control input-sm" id="addArea" name="area" placeholder="Cancer / RD" maxlength="50" required>
                         </div>
                     </div>
 
                     <div class="col-sm-6">
                         <div class="form-group">
                             <label for="addFamilyId">Family Id</label>
-                            <input type="text" class="form-control input-sm" id="addFamilyId" name="familyId" placeholder="familyId" required>
+                            <input type="text" class="form-control input-sm" id="addFamilyId" name="familyId" placeholder="familyId" maxlength="50">
                         </div>
                     </div>
 
 
                     <div class="form-group">
                         <label for="addDescription">Description</label>
-                        <textarea rows="2" class="form-control input-sm" id="addDescription" name="description" placeholder="description..." required></textarea>
+                        <textarea rows="2" class="form-control input-sm" id="addDescription" name="description" placeholder="description..." maxlength="500" required></textarea>
                     </div>
 
                     <div class="form-group">
                         <label for="addNotes">Notes</label>
-                        <textarea rows="2" class="form-control input-sm" id="addNotes" name="notes" placeholder="notes..."></textarea>
+                        <textarea rows="2" class="form-control input-sm" id="addNotes" name="notes" placeholder="notes..." maxlength="500"></textarea>
                     </div>
 
                     <div class="pull-right">
                         <button type="button" class="btn btn-default" data-dismiss="modal" >Close</button>
                             &nbsp;
-                        <button id="submit" type="submit" class="btn btn-primary dqmsButton" >Save 1</button>
+                        <button id="submit" type="submit" class="btn btn-primary dqmsButton" >Save</button>
                     </div>
                 </form>
             </div>

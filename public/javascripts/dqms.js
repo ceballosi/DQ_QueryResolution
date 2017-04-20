@@ -437,6 +437,49 @@ function reportDisplay(name) {
 }
 
 
+function bindAddForm() {
+    $("#addForm")[0].reset();
+    //autopopulate from first selection
+    if (tableIssues.rows({selected: true}).count() > 0) {
+        var found = false;
+        tableIssues.rows({selected: true}).data().each(function (rowData) {
+            if (!found) {
+                $("#addDataSource").val(rowData.dataSource);
+                $("#addDataItem").val(rowData.dataItem);
+                $("#addShortDesc").val(rowData.shortDesc);
+                $("#addArea").val(rowData.area);
+                $("#addDescription").val(rowData.description);
+                $("#addNotes").val(rowData.notes);
+                found = true;
+            }
+        });
+    }
+    //populate 'volatile' fields
+    $( "#addGMC" ).change(function() {
+        var issueId = "null";
+        var formData = new FormData();
+        formData.append('gmc', this.value);
+
+        $.ajax({
+            url: '/nextIssueId',
+            data: formData,
+            type: 'POST',
+            contentType: false,
+            processData: false,
+            success: function (data) {
+                issueId = data;
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                alert("An unexpected error occurred, please see server logs:" + textStatus + ': ' + errorThrown);
+            }
+        });
+        $("#addDateLogged").val(new Date().toLocaleDateString());
+        setTimeout(function () {
+            $("#addIssueId").val(issueId);
+        }, 500);
+    });
+}
+
 //import event setup
 $(function() {
     // attach `fileselect` event to all file inputs
@@ -501,6 +544,7 @@ $(document).ready(function () {
     });
 
     $("#addButton").click(function (e) {
+        bindAddForm();
         $("#addModal").modal({backdrop: 'static'});
         $("#addModal").modal('show');
     });
@@ -535,7 +579,10 @@ $(document).ready(function () {
     //    displayQChain(this);
     //});
 
+    //bindAddForm();
     //$("#addButton").click();
+//TODO - remove
+//        $('#addForm').formValidation();
 });
 
 

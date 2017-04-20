@@ -13,7 +13,7 @@ import play.api.mvc.MultipartFormData.FilePart
 import play.api.mvc._
 import services.{IssueTrackingService, MailService}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 @Singleton
@@ -231,5 +231,20 @@ class DqController @Inject()(issueTracking: IssueTrackingService, mailService: M
     }
   }
 
+
+  def nextIssueId = Action(parse.multipartFormData) { implicit req =>
+    val body: Map[String, Seq[String]] = req.body.dataParts
+
+    val gmc = param(body, "gmc").getOrElse("")
+
+    import scala.concurrent.duration._
+    var nextIssueId = ""
+    val result: Try[String] = Await.ready(issueTracking.nextIssueId(gmc), 30 seconds).value.get
+    result match {
+      case scala.util.Success(nextId) => nextIssueId = nextId
+      case scala.util.Failure(e) => log.error(e.toString)
+    }
+    Ok(nextIssueId)
+  }
 
 }

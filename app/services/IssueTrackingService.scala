@@ -34,6 +34,8 @@ trait IssueTrackingService {
   def findAllJoin: Future[Seq[(String,String,String)]]
 
   def queryChain(selected: String): Future[Seq[QueryChain]]
+
+  def nextIssueId(gmc: String) : Future[String]
 }
 
 @Singleton
@@ -193,6 +195,9 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
       case _ =>
     }
   }
+
+
+  def nextIssueId(gmc: String) : Future[String] = issueTrackingDao.nextIssueId(gmc)
 
 
   //TODO : To be removed (temporary method to provide a handler to the controller for creating a table using sample model)
