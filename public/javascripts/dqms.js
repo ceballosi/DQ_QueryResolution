@@ -437,9 +437,93 @@ function reportDisplay(name) {
 }
 
 
+function bindAddFormValidation() {
+    var validator = $('#addForm').validate(
+        {
+            rules: {
+                issueId: {
+                    required: true
+                },
+                status: {
+                    required: true
+                },
+                dateLogged: {
+                    dateMask: true
+                },
+                participant: {
+                    required: true,
+                    digits: true,
+                    range: [10000000, 999999999]
+                },
+                dataSource: {
+                    required: true,
+                    minlength: 2
+                },
+                priority: {
+                    required: true,
+                    digits: true,
+                    range: [1, 10]
+                },
+                dataItem: {
+                    required: true,
+                    minlength: 2
+                },
+                shortDesc: {
+                    required: true,
+                    minlength: 2
+                },
+                gmc: {
+                    required: true
+                },
+                lsid: {
+                    minlength: 5
+                },
+                area: {
+                    required: true,
+                    therapeuticArea: true
+                },
+                familyId: {
+                    minlength: 5
+                },
+                description: {
+                    required: true,
+                    minlength: 5
+                }
+            },
+            highlight: function (element) {
+                $(element).closest('.control-group').removeClass('valid').addClass('error');
+            },
+            unhighlight: function (element) {
+                $(element).addClass('valid').removeClass('error')
+                    .closest('.control-group').addClass('valid').removeClass('error');
+            }
+        });
+
+    $.validator.addMethod("therapeuticArea", function (value, element) {
+        return this.optional(element) || /^(Cancer|RD)$/.test(value);
+    }, "Please enter 'Cancer' or 'RD'");
+
+    $.validator.addMethod("dateMask", function (value, element) {
+        return this.optional(element) || /^\d{2}\/\d{2}\/\d{4}/i.test( value );
+    }, "Date required");
+
+    $('#addArea').on('keyup keypress', function(e) {
+        if (e.key == "c" || e.key == "C") {
+            $('#addArea').val("Cancer");
+        }
+        if (e.key == "r" || e.key == "R") {
+            $('#addArea').val("RD");
+        }
+    });
+    return validator;
+}
+
 function bindAddForm() {
+    var addFormValidr = bindAddFormValidation();
+    addFormValidr.resetForm();
+
     $("#addForm")[0].reset();
-    //autopopulate from first selection
+    //auto-populate from first selection
     if (tableIssues.rows({selected: true}).count() > 0) {
         var found = false;
         tableIssues.rows({selected: true}).data().each(function (rowData) {
@@ -454,12 +538,15 @@ function bindAddForm() {
             }
         });
     }
-    //populate 'volatile' fields
+    //populate 'volatile' fields on gmc select
     $( "#addGMC" ).change(function() {
         var issueId = "null";
         var formData = new FormData();
         formData.append('gmc', this.value);
-
+        if(this.value == "") {
+            $("#addIssueId").val("");
+            return;
+        }
         $.ajax({
             url: '/nextIssueId',
             data: formData,
@@ -473,10 +560,12 @@ function bindAddForm() {
                 alert("An unexpected error occurred, please see server logs:" + textStatus + ': ' + errorThrown);
             }
         });
-        $("#addDateLogged").val(new Date().toLocaleDateString());
+        $("#addDateLogged").val(new Date().toLocaleString());
         setTimeout(function () {
             $("#addIssueId").val(issueId);
-        }, 500);
+        }, 1500);
+
+        addFormValidr.form();   //trigger valdn
     });
 }
 
@@ -579,10 +668,6 @@ $(document).ready(function () {
     //    displayQChain(this);
     //});
 
-    //bindAddForm();
-    //$("#addButton").click();
-//TODO - remove
-//        $('#addForm').formValidation();
 });
 
 

@@ -149,6 +149,9 @@ footer {
     display: block;
 }
 
+.error{
+    color: #b62727;
+}
 .noneDisplay {
     display: none;
 }
