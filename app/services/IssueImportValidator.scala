@@ -69,7 +69,7 @@ class IssueImportValidator @Inject()(issueTrackingDao: IssueTrackingDao)(implici
 
     issue.participantId as "invalid participantId" should be >= 1000000
     issue.dataSource as "invalid dataSource" is notEmpty
-    issue.priority as "invalid priority" is within(1 to 2) // Inclusive
+    issue.priority as "invalid priority" is within(1 to 9) // Inclusive
     issue.dataItem as "invalid dataItem" is notEmpty
     issue.shortDesc as "invalid shortDesc" is notEmpty
     issue.description as "invalid description" is notEmpty

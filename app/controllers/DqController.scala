@@ -17,7 +17,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 @Singleton
-class DqController @Inject()(issueTracking: IssueTrackingService, mailService: MailService)(implicit ec: ExecutionContext) extends Controller {
+class DqController @Inject()(issueTracking: IssueTrackingService, saveIssueHelper: SaveIssueHelper, mailService: MailService)(implicit ec: ExecutionContext) extends Controller {
 
   val log: Logger = LoggerFactory.getLogger(this.getClass())
 
@@ -247,4 +247,17 @@ class DqController @Inject()(issueTracking: IssueTrackingService, mailService: M
     Ok(nextIssueId)
   }
 
+  def save = Action(parse.multipartFormData) { implicit req =>
+    val body: Map[String, Seq[String]] = req.body.dataParts
+
+    val gmc = param(body, "gmc").getOrElse("")
+println("gmc-" + gmc)
+
+    body.map{case(x,y) => println(x.toString + "--" + y.toString) }
+
+
+
+    val isOk = saveIssueHelper.validateAndSave(body)
+    Ok(isOk.toString)
+  }
 }

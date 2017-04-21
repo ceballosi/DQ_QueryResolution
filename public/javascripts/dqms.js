@@ -34,19 +34,19 @@ function loadIssues() {
             {"data": "escalation"},
             {"data": "notes"},
         ],
-        columnDefs: [ {
+        columnDefs: [{
             orderable: false,
             className: 'select-checkbox',
-            targets:   0
+            targets: 0
         }, {
             className: 'qchain',
-            targets:   9
-        } ],
+            targets: 9
+        }],
         select: {
-            style:    'os',
+            style: 'os',
             selector: 'td:first-child'
         },
-        order: [[ 3, 'desc' ]],
+        order: [[3, 'desc']],
         buttons: [
             'copy', 'excel', 'pdf'
         ],
@@ -58,8 +58,8 @@ function loadIssues() {
 }
 
 function displayQChain(el) {
-    var issueId = tableIssues.row( el ).data().DT_RowId;
-    var participantId = tableIssues.row( el ).data().patientId;
+    var issueId = tableIssues.row(el).data().DT_RowId;
+    var participantId = tableIssues.row(el).data().patientId;
 
     var formData = new FormData();
     formData.append('selectedIssue', issueId);
@@ -76,11 +76,11 @@ function displayQChain(el) {
 
             for (var i = 0; i < data.length; i++) {
 
-                if(data[i].partyid == 0)  qchainClass = "qchain-dq";
+                if (data[i].partyid == 0)  qchainClass = "qchain-dq";
                 else qchainClass = "qchain-gmc";
 
-                qChains += "<tr class='" + qchainClass +"'><td><strong>" + data[i].status + "</strong></td><td class='text-left'>" + data[i].date + "</td><td class='text-right'>" + data[i].user + "</td></tr>";
-                qChains += "<tr class='" + qchainClass +"'><td colspan='8'>" + data[i].comment + "</td></tr>";
+                qChains += "<tr class='" + qchainClass + "'><td><strong>" + data[i].status + "</strong></td><td class='text-left'>" + data[i].date + "</td><td class='text-right'>" + data[i].user + "</td></tr>";
+                qChains += "<tr class='" + qchainClass + "'><td colspan='8'>" + data[i].comment + "</td></tr>";
             }
             qChains += "</tbody>";
 
@@ -102,10 +102,10 @@ function loadGMCs() {
             if (data.length > 0) {
 
                 var output = [];
-                output.push('<option value="'+ 'all' +'">'+ 'all' +'</option>');
+                output.push('<option value="' + 'all' + '">' + 'all' + '</option>');
 
                 for (var i = 0; i < data.length; i++) {
-                    output.push('<option value="'+ data[i].gmc +'">'+ data[i].gmc +'</option>');
+                    output.push('<option value="' + data[i].gmc + '">' + data[i].gmc + '</option>');
                 }
                 $('#gmcSelect').html(output.join(''));
 
@@ -126,10 +126,10 @@ function loadOrigins() {
             if (data.length > 0) {
 
                 var output = [];
-                output.push('<option value="'+ 'all' +'">'+ 'all' +'</option>');
+                output.push('<option value="' + 'all' + '">' + 'all' + '</option>');
 
                 for (var i = 0; i < data.length; i++) {
-                    output.push('<option value="'+ data[i].origin +'">'+ data[i].origin +'</option>');
+                    output.push('<option value="' + data[i].origin + '">' + data[i].origin + '</option>');
                 }
                 $('#originSelect').html(output.join(''));
 
@@ -168,35 +168,35 @@ function statusChangeDialog(e) {
         buttons: [{
             label: 'Draft',
             cssClass: 'btn-confirm',
-            action: function(dialogItself){
+            action: function (dialogItself) {
                 dialogItself.close();
                 statusChangeConfirm("Draft");
             }
         }, {
             label: 'Open',
             cssClass: 'failure-default',
-            action: function(dialogItself){
+            action: function (dialogItself) {
                 dialogItself.close();
                 statusChangeConfirm("Open");
             }
         }, {
             label: 'Responded',
             cssClass: 'responded-default',
-            action: function(dialogItself){
+            action: function (dialogItself) {
                 dialogItself.close();
                 statusChangeConfirm("Responded");
             }
         }, {
             label: 'Resolved',
             cssClass: 'ok-default',
-            action: function(dialogItself){
+            action: function (dialogItself) {
                 dialogItself.close();
                 statusChangeConfirm("Resolved");
             }
         }, {
             label: 'Archived',
             cssClass: 'archived-default',
-            action: function(dialogItself){
+            action: function (dialogItself) {
                 dialogItself.close();
                 statusChangeConfirm("Archived");
                 statusDialog.close();
@@ -211,7 +211,7 @@ function statusChangeDialog(e) {
 function statusChangeConfirm(selectedStatus) {
     BootstrapDialog.confirm({
         title: 'Status Change',
-        message: 'Are you sure you want to change selected issues to: ' +selectedStatus+ '?',
+        message: 'Are you sure you want to change selected issues to: ' + selectedStatus + '?',
         type: BootstrapDialog.TYPE_WARNING,
         btnOKLabel: 'Change Status',
         btnOKClass: 'btn-warning',
@@ -258,7 +258,7 @@ function statusChange(selectedStatus) {
                     errorRows += "</tbody>";
 
                     $("#statusErrTableBody").replaceWith(errorRows);
-                    $("#statusErrors").modal({ backdrop: 'static'});
+                    $("#statusErrors").modal({backdrop: 'static'});
                     $("#statusErrors").modal('show');
                 }
             },
@@ -398,7 +398,7 @@ function importCsv(name) {
                 errorRows += "</tbody>";
 
                 $("#failuresTableBody").replaceWith(errorRows);
-                $("#importErrors").modal({ backdrop: 'static'});
+                $("#importErrors").modal({backdrop: 'static'});
                 $("#importErrors").modal('show');
             }
         },
@@ -421,7 +421,7 @@ function reportDisplay(name) {
 
             for (var i = 0; i < data.length; i++) {
                 errorRows += "<tr><td>" + data[i].outstanding + "</td><td>" + data[i].resolved + "</td>"
-                 + "<td>" + data[i].qtime + "</td><td>" + data[i].qitem + "</td></tr>";
+                    + "<td>" + data[i].qtime + "</td><td>" + data[i].qitem + "</td></tr>";
             }
             errorRows += "</tbody>";
 
@@ -436,6 +436,29 @@ function reportDisplay(name) {
     return false;
 }
 
+
+function saveIssue() {
+    var issueId = "fred";
+    var formData = new FormData($('#addForm')[0]);
+    formData.append("gmc", $("#addGMC").val);
+//TODO - ajax async callbacks vs promises
+
+    $.ajax({
+        url: '/save',
+        data: formData,
+        type: 'POST',
+        contentType: false,
+        processData: false,
+        success: function (data) {
+            //what happens on success? keep screen blanking out uniq fields?
+            issueId = data;
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert("An unexpected error occurred, please see server logs:" + textStatus + ': ' + errorThrown);
+        }
+    });
+    console.log("returned data=" + issueId);
+}
 
 function bindAddFormValidation() {
     var validator = $('#addForm').validate(
@@ -462,7 +485,7 @@ function bindAddFormValidation() {
                 priority: {
                     required: true,
                     digits: true,
-                    range: [1, 10]
+                    range: [1, 9]
                 },
                 dataItem: {
                     required: true,
@@ -496,6 +519,9 @@ function bindAddFormValidation() {
             unhighlight: function (element) {
                 $(element).addClass('valid').removeClass('error')
                     .closest('.control-group').addClass('valid').removeClass('error');
+            },
+            submitHandler: function () {
+                saveIssue();
             }
         });
 
@@ -504,10 +530,10 @@ function bindAddFormValidation() {
     }, "Please enter 'Cancer' or 'RD'");
 
     $.validator.addMethod("dateMask", function (value, element) {
-        return this.optional(element) || /^\d{2}\/\d{2}\/\d{4}/i.test( value );
+        return this.optional(element) || /^\d{2}\/\d{2}\/\d{4}/i.test(value);
     }, "Date required");
 
-    $('#addArea').on('keyup keypress', function(e) {
+    $('#addArea').on('keyup keypress', function (e) {
         if (e.key == "c" || e.key == "C") {
             $('#addArea').val("Cancer");
         }
@@ -539,11 +565,11 @@ function bindAddForm() {
         });
     }
     //populate 'volatile' fields on gmc select
-    $( "#addGMC" ).change(function() {
+    $("#addGMC").change(function () {
         var issueId = "null";
         var formData = new FormData();
         formData.append('gmc', this.value);
-        if(this.value == "") {
+        if (this.value == "") {
             $("#addIssueId").val("");
             return;
         }
@@ -570,9 +596,9 @@ function bindAddForm() {
 }
 
 //import event setup
-$(function() {
+$(function () {
     // attach `fileselect` event to all file inputs
-    $(document).on('change', ':file', function() {
+    $(document).on('change', ':file', function () {
         var input = $(this),
             numFiles = input.get(0).files ? input.get(0).files.length : 1,
             label = input.val().replace(/\\/g, '/').replace(/.*\//, '');
@@ -580,13 +606,13 @@ $(function() {
     });
 
     // watch for custom `fileselect` event
-    $(document).ready( function() {
-        $(':file').on('fileselect', function(event, numFiles, label) {
+    $(document).ready(function () {
+        $(':file').on('fileselect', function (event, numFiles, label) {
 
             var input = $(this).parents('.input-group').find(':text'),
                 selectedFile = numFiles > 1 ? numFiles + ' files selected' : label;
 
-            if( input.length ) {
+            if (input.length) {
                 input.val(selectedFile);
             }
             $("#importFilename").text("File '" + selectedFile + "' will be imported into the database.");
@@ -595,7 +621,6 @@ $(function() {
     });
 
 });
-
 
 
 $(document).ready(function () {
@@ -617,17 +642,17 @@ $(document).ready(function () {
         filterTable(tableIssues, url, e);
     });
 
-    $('#gmcSelect').change(function(e) {
+    $('#gmcSelect').change(function (e) {
         var url = "/list?" + buildFilter();
         filterTable(tableIssues, url, e);
     });
 
-    $('#statusSelect').change(function(e) {
+    $('#statusSelect').change(function (e) {
         var url = "/list?" + buildFilter();
         filterTable(tableIssues, url, e);
     });
 
-    $('#originSelect').change(function(e) {
+    $('#originSelect').change(function (e) {
         var url = "/list?" + buildFilter();
         filterTable(tableIssues, url, e);
     });
@@ -658,9 +683,13 @@ $(document).ready(function () {
 
     $("#proceedImport").click(function (e) {
         var selectedFile = $("#importFile").get(0).files[0].name;
-        if(selectedFile.length) {
+        if (selectedFile.length) {
             importCsv(selectedFile);
         }
+    });
+
+    $("#addForm").submit(function (e) {
+        e.preventDefault();
     });
 
     //Qchain
