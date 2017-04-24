@@ -14,7 +14,7 @@ import scala.concurrent.ExecutionContext
 
 class SaveIssueHelper @Inject()(issueTrackingService: IssueTrackingService, validator: IssueImportValidator)(implicit ec: ExecutionContext) {
   val log: Logger = LoggerFactory.getLogger(this.getClass())
-  val dateTimeFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy, HH:mm:ss")
+  val dateTimeFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss")
 
 
   def validateAndSave(request: Map[String, Seq[String]]): String = {
