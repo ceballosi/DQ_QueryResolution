@@ -66,8 +66,8 @@ class IssueImportValidator @Inject()(issueTrackingDao: IssueTrackingDao)(implici
     //    (new DateTime(issue.dateLogged)).toInstant is between( lastYear, now )
     //should work! but doesn't recognise "<" prob because can't do "import com.wix.accord.joda" doesn't exist in snapshot
     //    (new DateTime(issue.dateLogged)).toInstant should be < now
-
-    issue.participantId as "invalid participantId" should be >= 1000000
+//                                                              10000000, 999999999
+    issue.participantId as "invalid participantId" should be >= 10000000
     issue.dataSource as "invalid dataSource" is notEmpty
     issue.priority as "invalid priority" is within(1 to 9) // Inclusive
     issue.dataItem as "invalid dataItem" is notEmpty
