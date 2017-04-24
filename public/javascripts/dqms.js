@@ -237,7 +237,7 @@ function statusChange(selectedStatus) {
         formData.append('selectedIssues', selectedIds);
 
         $.ajax({
-            url: '/status',
+            url: '/changeStatus',
             data: formData,
             type: 'POST',
             contentType: false,
@@ -261,14 +261,12 @@ function statusChange(selectedStatus) {
                     $("#statusErrors").modal({backdrop: 'static'});
                     $("#statusErrors").modal('show');
                 }
+                tableIssues.ajax.url(currentFilter).load();
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 alert("An unexpected error occurred, please see server logs:" + textStatus + ': ' + errorThrown);
             }
         });
-        setTimeout(function () {
-            tableIssues.ajax.url(currentFilter).load();
-        }, 2000);
     }
 }
 
@@ -438,10 +436,8 @@ function reportDisplay(name) {
 
 
 function saveIssue() {
-    var issueId = "fred";
-    var formData = new FormData($('#addForm')[0]);
-    formData.append("gmc", $("#addGMC").val);
-//TODO - ajax async callbacks vs promises
+    var formData = new FormData($('#addForm')[0]); //auto serialize
+    formData.append("gmc", $("#addGMC").val());
 
     $.ajax({
         url: '/save',
@@ -450,14 +446,26 @@ function saveIssue() {
         contentType: false,
         processData: false,
         success: function (data) {
-            //what happens on success? keep screen blanking out uniq fields?
-            issueId = data;
+            if (data == "Save ok") {
+                BootstrapDialog.show({
+                    title: 'Save Successful',
+                    size: BootstrapDialog.SIZE_SMALL,
+                    type: BootstrapDialog.TYPE_SUCCESS
+                });
+            } else {
+                BootstrapDialog.show({
+                    title: 'Save Failed',
+                    message: data,
+                    size: BootstrapDialog.SIZE_SMALL,
+                    type: BootstrapDialog.TYPE_DANGER
+                });
+            }
+
         },
         error: function (jqXHR, textStatus, errorThrown) {
             alert("An unexpected error occurred, please see server logs:" + textStatus + ': ' + errorThrown);
         }
     });
-    console.log("returned data=" + issueId);
 }
 
 function bindAddFormValidation() {
@@ -581,17 +589,14 @@ function bindAddForm() {
             processData: false,
             success: function (data) {
                 issueId = data;
+                $("#addIssueId").val(issueId);
+                $("#addDateLogged").val(new Date().toLocaleString());
+                addFormValidr.form();
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 alert("An unexpected error occurred, please see server logs:" + textStatus + ': ' + errorThrown);
             }
         });
-        $("#addDateLogged").val(new Date().toLocaleString());
-        setTimeout(function () {
-            $("#addIssueId").val(issueId);
-        }, 1500);
-
-        addFormValidr.form();   //trigger valdn
     });
 }
 

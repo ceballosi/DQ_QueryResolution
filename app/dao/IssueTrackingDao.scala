@@ -1,5 +1,6 @@
 package dao
 
+import java.io.{PrintWriter, StringWriter}
 import java.util.Date
 import javax.inject.{Inject, Singleton}
 
@@ -221,6 +222,9 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
       case scala.util.Failure(ex) => {
         val msg: String = s"insert db error ex=" + ex.toString
         log.error(msg)
+        val sw = new StringWriter
+        ex.printStackTrace(new PrintWriter(sw))
+        log.error(sw.toString)
         (false, msg)
       }
     }

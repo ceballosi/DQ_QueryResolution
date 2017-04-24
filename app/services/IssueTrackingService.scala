@@ -26,6 +26,7 @@ trait IssueTrackingService {
   def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[Issue]]
   def importFile(file: File): List[(Int, Throwable)]
   def changeStatus(newStatus: Status, issueIds: List[String]): Future[List[(String, Throwable)]]
+  def save(issue: Issue): (Boolean, String)
     //TODO : To be removed (temporary method to create a table and populate data)
   def tmpMethod: Future[Unit]
 
@@ -159,6 +160,9 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
     Future(failures.toList)
   }
 
+  def save(issue: Issue): (Boolean, String) = {
+   issueTrackingDao.insert(issue)
+  }
 
   def findIssuesInOrder(issueIds: List[String]): List[Issue] = {
     val orderedIssues = ListBuffer[Issue]()

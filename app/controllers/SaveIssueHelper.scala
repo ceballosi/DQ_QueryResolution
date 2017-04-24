@@ -8,28 +8,30 @@ import domain.{Draft, Issue, Status}
 import org.slf4j.{Logger, LoggerFactory}
 import services.{IssueImportValidator, IssueTrackingService}
 
-class SaveIssueHelper @Inject()(issueTrackingService: IssueTrackingService, validator: IssueImportValidator){
+import scala.concurrent.ExecutionContext
+
+class SaveIssueHelper @Inject()(issueTrackingService: IssueTrackingService, validator: IssueImportValidator)(implicit ec: ExecutionContext) {
   val log: Logger = LoggerFactory.getLogger(this.getClass())
 
-  def validateAndSave(request: Map[String, Seq[String]]): Boolean = {
+
+  def validateAndSave(request: Map[String, Seq[String]]): String = {
 
     val newIssue = createIssue(request)
-    val validationResult: (Boolean, String) = validate(newIssue)
-    if (validationResult._1) {
-    //save(newIssue)
-      log.error("YIPPEE! ready to save")
-      true
+
+    var (pass, error) = validate(newIssue)
+    pass = true
+//    var finalResult = ""
+    if (pass) {
+//      finalResult = save(newIssue)
+       save(newIssue)
     } else {
-      //pass this to ui....
-      log.error("NO GO - didn't validate")
-      log.error(validationResult._2)
-      false
+      log.error(error)
+//      finalResult = error
+      error
     }
+//    finalResult
   }
 
-  def validate(issue: Issue): (Boolean, String) = {
-    validator.validateIssue(1,issue)
-  }
 
   def createIssue(request: Map[String, Seq[String]]): Issue = {
     //gather params
@@ -57,4 +59,23 @@ class SaveIssueHelper @Inject()(issueTrackingService: IssueTrackingService, vali
     log.info("newIssue=" + newIssue)
     newIssue
   }
+
+
+  def validate(issue: Issue): (Boolean, String) = {
+    validator.validateIssue(1, issue)
+  }
+
+
+  def save(newIssue: Issue): String = {
+    val (pass, error) = issueTrackingService.save(newIssue)
+
+    if (pass) {
+      "Save ok"
+    } else {
+      log.error(s"Saving issue failed ${error}")
+      s"Save failed, ${error}"
+    }
+  }
+
+
 }

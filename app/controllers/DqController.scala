@@ -1,5 +1,6 @@
 package controllers
 
+import java.io.{PrintWriter, StringWriter}
 import javax.inject._
 
 import controllers.UiUtils._
@@ -136,7 +137,9 @@ class DqController @Inject()(issueTracking: IssueTrackingService, saveIssueHelpe
     }
     result.getOrElse {
       val e: Throwable = result.failed.get
-      log.error(s"File upload failed ${e.getMessage}\n" + e.getStackTrace.mkString("\n"))
+      val sw = new StringWriter
+      e.printStackTrace(new PrintWriter(sw))
+      log.error(s"File upload failed ${sw.toString}")
       Ok("File upload failed")
     }
   }
@@ -169,7 +172,9 @@ class DqController @Inject()(issueTracking: IssueTrackingService, saveIssueHelpe
     }
     result.getOrElse {
       val e: Throwable = result.failed.get
-      log.error(s"Change Status failed ${e.getMessage}\n" + e.getStackTrace.mkString("\n"))
+      val sw = new StringWriter
+      e.printStackTrace(new PrintWriter(sw))
+      log.error(s"Change Status failed ${sw.toString}")
       Future(Ok("Change Status failed"))
     }
   }
@@ -226,7 +231,9 @@ class DqController @Inject()(issueTracking: IssueTrackingService, saveIssueHelpe
     }
     result.getOrElse {
       val e: Throwable = result.failed.get
-      log.error(s"Retrieving Query Chain failed ${e.getMessage}\n" + e.getStackTrace.mkString("\n"))
+      val sw = new StringWriter
+      e.printStackTrace(new PrintWriter(sw))
+      log.error(s"Retrieving Query Chain failed ${sw.toString}")
       Future(Ok("Retrieving Query Chain failed"))
     }
   }
@@ -248,16 +255,6 @@ class DqController @Inject()(issueTracking: IssueTrackingService, saveIssueHelpe
   }
 
   def save = Action(parse.multipartFormData) { implicit req =>
-    val body: Map[String, Seq[String]] = req.body.dataParts
-
-    val gmc = param(body, "gmc").getOrElse("")
-println("gmc-" + gmc)
-
-    body.map{case(x,y) => println(x.toString + "--" + y.toString) }
-
-
-
-    val isOk = saveIssueHelper.validateAndSave(body)
-    Ok(isOk.toString)
+    Ok(saveIssueHelper.validateAndSave(req.body.dataParts).toString)
   }
 }
