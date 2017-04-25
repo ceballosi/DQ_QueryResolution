@@ -10,7 +10,7 @@ import org.joda.time.LocalDate
 import org.slf4j.{Logger, LoggerFactory}
 
 /**
-  * This builder is specifically to service the requirements of the UI Datatables.js component
+  * This builder services the requirements of the UI Datatables.js component
   */
 object DatatablesRequestBuilder {
 
@@ -22,11 +22,10 @@ object DatatablesRequestBuilder {
   //support both get & post by taking the param map
   def build(request: Map[String, Seq[String]]): SearchRequest = {
     //for security coerce these to int and provide safe fallbacks
-    val draw = param(request,"draw").getOrElse("1").toInt
-    val offset = param(request,"start").getOrElse("0").toInt
-    val pageSize = param(request,"length").getOrElse("10").toInt
+    val draw = param(request, "draw").getOrElse("1").toInt
+    val offset = param(request, "start").getOrElse("0").toInt
+    val pageSize = param(request, "length").getOrElse("10").toInt
 
-    println(s"pageSize=$pageSize")
     val filter = param(request, "filter")
     val search = param(request, "search[value]")
     var isNew = false
@@ -51,17 +50,23 @@ object DatatablesRequestBuilder {
     }
 
     var gmc = param(request, "gmc")
-    var dateLogged: Option[Date] = None
     var participantId: Option[Int] = None
     var issueStatus = Status.statusFrom(param(request, "status"))
     var dataSource = param(request, "origin")
-    val priority = param(request, "priority")
     var area = param(request, "area")
 
-    var maybePriority: Option[Int] = priority match {
+
+    var dateLoggedStart = parseDaysToOptionDate(param(request, "startDays"))
+    var dateLoggedEnd = parseDaysToOptionDate(param(request, "endDays"))
+
+    println("startDays=" + param(request, "startDays") + " dateLoggedStart=" + dateLoggedStart)
+    println("endDays=" + param(request, "endDays") + " dateLoggedEnd=" + dateLoggedEnd)
+
+    var maybePriority: Option[Int] = param(request, "priority") match {
       case Some(p) if p.length > 0 => Some(p.toInt)
       case None => None
     }
+
 
     if (isNew) {
       participantId = None
@@ -70,8 +75,6 @@ object DatatablesRequestBuilder {
       maybePriority = None
       area = None
       issueStatus = Some(Draft)
-      val days = param(request, "days").getOrElse("0").toInt
-      dateLogged = Some(LocalDate.now().minusDays(days).toDate)
     }
 
     //search is higher precedence than filters
@@ -80,7 +83,8 @@ object DatatablesRequestBuilder {
       gmc = None
       maybePriority = None
       area = None
-      dateLogged = None
+      dateLoggedStart = None
+      dateLoggedEnd = None
       issueStatus = None
       dataSource = None
     }
@@ -93,12 +97,29 @@ object DatatablesRequestBuilder {
     val sortOrderFromUI = sortDir.getOrElse("desc")
     log.info(s"sortCol=$sortCol sortDir=$sortDir sortColFromUI=$sortColFromUI sortOrderFromUI=$sortOrderFromUI")
 
-    val sortCriteria : Option[(String, String)] = Some((sortColFromUI,sortOrderFromUI))
-    val searchCriteria = SearchCriteria(gmc, issueStatus = issueStatus, dataSource = dataSource, dateLogged = dateLogged, priority = maybePriority, area = area, participantId = participantId)
+    val sortCriteria: Option[(String, String)] = Some((sortColFromUI, sortOrderFromUI))
+    val searchCriteria = SearchCriteria(gmc, issueStatus = issueStatus, dataSource = dataSource, dateLoggedStart = dateLoggedStart, dateLoggedEnd = dateLoggedEnd, priority = maybePriority, area = area, participantId = participantId)
 
     val searchRequest: SearchRequest = SearchRequest(offset, pageSize, searchCriteria, draw, sortCriteria)
     log.info(s"searchRequest: $searchRequest")
     searchRequest
+  }
+
+
+  def parseDaysToOptionDate(possibleDays: Option[String]): Option[Date] = {
+    //adds custom unapply to Int for String pattern match
+    object Int {
+      def unapply(s: String): Option[Int] = util.Try(s.toInt).toOption
+    }
+
+    possibleDays match {
+      case Some(days) => days match {
+        case Int(i) => Some(LocalDate.now().minusDays(i).toDate)
+        case _ => None //ignore non int strings
+      }
+      case None => None
+    }
+
   }
 
 }

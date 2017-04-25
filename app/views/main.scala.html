@@ -40,65 +40,68 @@
             <p> </p>
         </header>
         <div class="container-fluid body-content">
-            <nav style="margin-left: 5px;">
+            <nav id="nav" style="margin-left: 5px ;">
                 <p class="dq-all">
-                    <a id="allIssues" href="/dq-filters/">All Issues</a>
+                    <a id="allIssues" href="/dq-filters/"><label>All Issues</label></a>
                     <br>
                     <br>
-                    <a id="newIssues" href="/">New issues</a>
+                    <a id="newIssues" href="/"><label>New Open issues</label></a>
                 </p>
-                    <div class="dqmsSelect form-group-sm">GMCs
-                        <select id="gmcSelect" class="input-sm">
-                        </select>
-                    </div>
-                    <div class="dqmsSelect form-group-sm">Status
-                        <select id="statusSelect" class="input-sm">
-                            <option>all</option>
-                            <option>Draft</option>
-                            <option>Open</option>
-                            <option>Responded</option>
-                            <option>Resolved</option>
-                            <option>Archived</option>
-                        </select>
-                    </div>
-                    <div class="dqmsSelect form-group-sm">Data Source
-                        <select id="originSelect" class="input-sm">
-                        </select>
-                    </div>
-                <div class="dqmsSelect form-group-sm hide">Priority
+                <div class="dqmsSelect form-group-sm"><label for="prioritySelect">Priority</label><br>
                     <select id="prioritySelect" class="input-sm">
                     </select>
                 </div>
-                <div class="dqmsSelect form-group-sm hide">Cancer/RD
+                <div class="dqmsSelect form-group-sm"><label for="gmcSelect">GMCs</label>
+                    <select id="gmcSelect" class="input-sm">
+                        </select>
+                </div>
+                <div class="dqmsSelect form-group-sm"><label for="areaSelect">Area</label>
                     <select id="areaSelect" class="input-sm">
                         <option>all</option>
                         <option>Cancer</option>
                         <option>RD</option>
                     </select>
                 </div>
-                <div class="row hide">
-                    <div class="col-sm-12 dqmsSelect">Date Logged</div>
+                <div class="dqmsSelect form-group-sm"><label for="statusSelect">Status</label>
+                    <select id="statusSelect" class="input-sm">
+                        <option>all</option>
+                        <option>Draft</option>
+                        <option>Open</option>
+                        <option>Responded</option>
+                        <option>Resolved</option>
+                        <option>Archived</option>
+                    </select>
+                </div>
+                <div class="dqmsSelect form-group-sm"><label for="originSelect">Data Source</label>
+                    <select id="originSelect" class="input-sm">
+                    </select>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">&nbsp;</div>
+                    <div class="col-sm-12 dqmsSelect"><label>Date Logged</label></div>
                     <div class="col-sm-6">
                         <div class="form-group dqmsSelect">
-                            <label for="startDays">From</label>
-                            <input type="text" class="form-control input-sm dqmsSelect" style="width: 50px;" id="startDays" name="startDays" placeholder="7" maxlength="4" value="-" size="4" required>days ago
+                            From
+                            <input type="text" class="form-control input-sm dqmsSelect" style="width: 50px ;" id="startDays" name="startDays" placeholder="7" maxlength="4" value="-" size="4" required>
+                            days ago
                         </div>
                     </div>
 
                     <div class="col-sm-6">
                         <div class="form-group dqmsSelect">
-                            <label for="endDays">To</label>
-                            <input type="text" class="form-control input-sm dqmsSelect" style="width: 50px;" id="endDays" name="endDays"  maxlength="4" value="-" size="4" required>days ago
+                            To
+                            <input type="text" class="form-control input-sm dqmsSelect" style="width: 50px ;" id="endDays" name="endDays" maxlength="4" value="-" size="4" required>
+                            days ago
                         </div>
                     </div>
                 </div>
             </nav>
             <section id="main">
-            @content
-            @dqmsDialogs()
-            @dqmsAddIssue()
-            @dqmsReport()
-            @dqmsQueryChain()
+                @content
+                @dqmsDialogs()
+                @dqmsAddIssue()
+                @dqmsReport()
+                @dqmsQueryChain()
             </section>
         </div>
     </body>

@@ -27,7 +27,8 @@ package object dao {
                             priority: Option[Int] = None,
                             dataSource: Option[String] = None,
                             area: Option[String] = None,
-                            dateLogged: Option[Date] = None,
+                            dateLoggedStart: Option[Date] = None,
+                            dateLoggedEnd: Option[Date] = None,
                             participantId: Option[Int] = None,
                             searchValue: Option[String] = None
                            )

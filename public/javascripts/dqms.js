@@ -316,7 +316,9 @@ function buildFilter() {
     var origin = $('#originSelect').val() == 'all' ? '' : '&origin=' + $('#originSelect').val();
     var priority = $('#prioritySelect').val() == 'all' ? '' : '&priority=' + $('#prioritySelect').val();
     var area = $('#areaSelect').val() == 'all' ? '' : '&area=' + $('#areaSelect').val();
-    return gmc + status + origin + priority + area;
+    var startDays = $('#startDays').val() == '-' ? '' : '&startDays=' + $('#startDays').val();
+    var endDays = $('#endDays').val() == '-' ? '' : '&endDays=' + $('#endDays').val();
+    return gmc + status + origin + priority + area + startDays + endDays;
 }
 
 function filterTable(tableIssues, url, e) {
@@ -330,6 +332,8 @@ function resetInputs() {
     $('#originSelect').val('all');
     $('#prioritySelect').val('all');
     $('#areaSelect').val('all');
+    $('#startDays').val('-');
+    $('#endDays').val('-');
 }
 
 function getParameterByName(name, url) {
@@ -350,6 +354,8 @@ function exportCsv() {
     var origin = null;
     var priority = null;
     var area = null;
+    var startDays = null;
+    var endDays = null;
     var isNew = false;
     var allIssues = false;
     var split = currentFilter.split("?");
@@ -373,6 +379,12 @@ function exportCsv() {
             if (params[i].startsWith("area=")) {
                 area = params[i].substring(params[i].indexOf("=") + 1);
             }
+            if (params[i].startsWith("startDays=")) {
+                startDays = params[i].substring(params[i].indexOf("=") + 1);
+            }
+            if (params[i].startsWith("endDays=")) {
+                endDays = params[i].substring(params[i].indexOf("=") + 1);
+            }
             if (params[i].startsWith("filter=new")) {
                 isNew = true;
             }
@@ -386,7 +398,7 @@ function exportCsv() {
         cleanHiddenInputs();
     }
 
-    if (existingGmc || status || origin || priority || area) {
+    if (existingGmc || status || origin || priority || area || startDays || endDays) {
         cleanHiddenInputs();
         if (existingGmc) {
             $('#exportIssuesForm').append('<input type="hidden" id="gmc" name="gmc" value="" />');
@@ -408,6 +420,14 @@ function exportCsv() {
             $('#exportIssuesForm').append('<input type="hidden" id="area" name="area" value="" />');
             $(':hidden#area').val(area);
         }
+        if (startDays) {
+            $('#exportIssuesForm').append('<input type="hidden" id="startDays" name="startDays" value="" />');
+            $(':hidden#startDays').val(startDays);
+        }
+        if (endDays) {
+            $('#exportIssuesForm').append('<input type="hidden" id="endDays" name="endDays" value="" />');
+            $(':hidden#endDays').val(endDays);
+        }
     }
     if (isNew) {
         cleanHiddenInputs();
@@ -425,6 +445,8 @@ function exportCsv() {
         $(':hidden#origin').remove();
         $(':hidden#priority').remove();
         $(':hidden#area').remove();
+        $(':hidden#startDays').remove();
+        $(':hidden#endDays').remove();
     }
 }
 
@@ -707,31 +729,15 @@ $(document).ready(function () {
 
     $("#newIssues").click(function (e) {
         resetInputs();
-        var url = "/list?filter=new&days=30";   //should be last 30days by default
-        filterTable(tableIssues, url, e);
-    });
+        $('#statusSelect').val('Open');
+        $('#startDays').val('7');
 
-    $('#gmcSelect').change(function (e) {
+        //var url = "/list?filter=new&days=30";   //should be last 30days by default
         var url = "/list?" + buildFilter();
         filterTable(tableIssues, url, e);
     });
 
-    $('#statusSelect').change(function (e) {
-        var url = "/list?" + buildFilter();
-        filterTable(tableIssues, url, e);
-    });
-
-    $('#originSelect').change(function (e) {
-        var url = "/list?" + buildFilter();
-        filterTable(tableIssues, url, e);
-    });
-
-    $('#prioritySelect').change(function (e) {
-        var url = "/list?" + buildFilter();
-        filterTable(tableIssues, url, e);
-    });
-
-    $('#areaSelect').change(function (e) {
+    $('#nav').on('change', '#gmcSelect, #statusSelect, #originSelect, #prioritySelect, #areaSelect, #startDays, #endDays', function (e) {
         var url = "/list?" + buildFilter();
         filterTable(tableIssues, url, e);
     });

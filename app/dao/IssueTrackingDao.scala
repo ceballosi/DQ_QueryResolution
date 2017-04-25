@@ -146,7 +146,8 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
       .filter(cr.priority)(v => d => d.priority === v)
       .filter(cr.dataSource)(v => d => d.dataSource === v)
       .filter(cr.area)(v => d => d.area === v)
-      .filter(cr.dateLogged)(v => d => d.dateLogged > v)
+      .filter(cr.dateLoggedStart)(v => d => d.dateLogged >= v)
+      .filter(cr.dateLoggedEnd)(v => d => d.dateLogged <= v)
       .filter(cr.participantId)(v => d => d.participantId === v)
       .query
   }
