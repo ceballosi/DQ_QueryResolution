@@ -20,6 +20,7 @@ trait IssueTrackingService {
   def allIssues: Future[Seq[Issue]]
   def listGmcs: Future[Seq[String]]
   def listOrigins: Future[Seq[String]]
+  def listPriorities: Future[Seq[Int]]
   def allIssuesNow: List[Issue]
   def findByCriteria(cr : SearchCriteria): Future[Seq[Issue]]
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]]
@@ -67,6 +68,8 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
   def listGmcs: Future[Seq[String]] = issueTrackingDao.listGmcs
 
   def listOrigins: Future[Seq[String]] = issueTrackingDao.listOrigins
+
+  def listPriorities: Future[Seq[Int]] = issueTrackingDao.listPriorities
 
   def findByCriteria(searchCriteria : SearchCriteria): Future[Seq[Issue]] =
     issueTrackingDao.findByCriteria(searchCriteria)

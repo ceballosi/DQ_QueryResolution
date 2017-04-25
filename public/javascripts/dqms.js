@@ -158,6 +158,30 @@ function loadOrigins() {
         }
     });
 }
+function loadPriorities() {
+    $.ajax({
+        url: "/listPriorities",
+        success: function (data) {
+            if (data.length > 0) {
+
+                var output = [];
+                output.push('<option value="' + 'all' + '">' + 'all' + '</option>');
+
+                for (var i = 0; i < data.length; i++) {
+                    output.push('<option value="' + data[i].priority + '">' + data[i].priority + '</option>');
+                }
+                $('#prioritySelect').html(output.join(''));
+
+            } else {
+                alert("no priorities to load - there may have been an error");
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert("An unexpected error occurred loading Priorities, please see server logs:" + textStatus + ': ' + errorThrown);
+        }
+    });
+}
+
 
 
 function sendSelected(e) {
@@ -290,7 +314,9 @@ function buildFilter() {
     var gmc = $('#gmcSelect').val() == 'all' ? '' : '&gmc=' + $('#gmcSelect').val();
     var status = $('#statusSelect').val() == 'all' ? '' : '&status=' + $('#statusSelect').val();
     var origin = $('#originSelect').val() == 'all' ? '' : '&origin=' + $('#originSelect').val();
-    return gmc + status + origin;
+    var priority = $('#prioritySelect').val() == 'all' ? '' : '&priority=' + $('#prioritySelect').val();
+    var area = $('#areaSelect').val() == 'all' ? '' : '&area=' + $('#areaSelect').val();
+    return gmc + status + origin + priority + area;
 }
 
 function filterTable(tableIssues, url, e) {
@@ -302,6 +328,8 @@ function resetInputs() {
     $('#gmcSelect').val('all');
     $('#statusSelect').val('all');
     $('#originSelect').val('all');
+    $('#prioritySelect').val('all');
+    $('#areaSelect').val('all');
 }
 
 function getParameterByName(name, url) {
@@ -320,6 +348,8 @@ function exportCsv() {
     var existingGmc = null;
     var status = null;
     var origin = null;
+    var priority = null;
+    var area = null;
     var isNew = false;
     var allIssues = false;
     var split = currentFilter.split("?");
@@ -337,6 +367,12 @@ function exportCsv() {
             if (params[i].startsWith("origin=")) {
                 origin = params[i].substring(params[i].indexOf("=") + 1);
             }
+            if (params[i].startsWith("priority=")) {
+                priority = params[i].substring(params[i].indexOf("=") + 1);
+            }
+            if (params[i].startsWith("area=")) {
+                area = params[i].substring(params[i].indexOf("=") + 1);
+            }
             if (params[i].startsWith("filter=new")) {
                 isNew = true;
             }
@@ -350,7 +386,7 @@ function exportCsv() {
         cleanHiddenInputs();
     }
 
-    if (existingGmc || status) {
+    if (existingGmc || status || origin || priority || area) {
         cleanHiddenInputs();
         if (existingGmc) {
             $('#exportIssuesForm').append('<input type="hidden" id="gmc" name="gmc" value="" />');
@@ -363,6 +399,14 @@ function exportCsv() {
         if (origin) {
             $('#exportIssuesForm').append('<input type="hidden" id="origin" name="origin" value="" />');
             $(':hidden#origin').val(origin);
+        }
+        if (priority) {
+            $('#exportIssuesForm').append('<input type="hidden" id="priority" name="priority" value="" />');
+            $(':hidden#priority').val(priority);
+        }
+        if (area) {
+            $('#exportIssuesForm').append('<input type="hidden" id="area" name="area" value="" />');
+            $(':hidden#area').val(area);
         }
     }
     if (isNew) {
@@ -379,6 +423,8 @@ function exportCsv() {
         $(':hidden#gmc').remove();
         $(':hidden#status').remove();
         $(':hidden#origin').remove();
+        $(':hidden#priority').remove();
+        $(':hidden#area').remove();
     }
 }
 
@@ -452,6 +498,7 @@ function reportDisplay(name) {
 
 
 function saveIssue() {
+    return;
     var formData = new FormData($('#addForm')[0]); //auto serialize
     formData.append("gmc", $("#addGMC").val());
 
@@ -649,6 +696,7 @@ $(document).ready(function () {
     tableIssues = $('#issuesTable').DataTable();
     loadGMCs();
     loadOrigins();
+    loadPriorities();
     resetInputs();
 
     $("#allIssues").click(function (e) {
@@ -674,6 +722,16 @@ $(document).ready(function () {
     });
 
     $('#originSelect').change(function (e) {
+        var url = "/list?" + buildFilter();
+        filterTable(tableIssues, url, e);
+    });
+
+    $('#prioritySelect').change(function (e) {
+        var url = "/list?" + buildFilter();
+        filterTable(tableIssues, url, e);
+    });
+
+    $('#areaSelect').change(function (e) {
         var url = "/list?" + buildFilter();
         filterTable(tableIssues, url, e);
     });

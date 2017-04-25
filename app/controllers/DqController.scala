@@ -68,6 +68,11 @@ class DqController @Inject()(issueTracking: IssueTrackingService, saveIssueHelpe
   }
 
 
+  def listPriorities = Action.async { implicit req =>
+    issueTracking.listPriorities.map(origins => Ok(prioritiesToJson(origins)))
+  }
+
+
   def container = Action {
     Ok(views.html.container())
   }

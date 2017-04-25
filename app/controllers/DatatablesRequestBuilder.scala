@@ -55,11 +55,20 @@ object DatatablesRequestBuilder {
     var participantId: Option[Int] = None
     var issueStatus = Status.statusFrom(param(request, "status"))
     var dataSource = param(request, "origin")
+    val priority = param(request, "priority")
+    var area = param(request, "area")
+
+    var maybePriority: Option[Int] = priority match {
+      case Some(p) if p.length > 0 => Some(p.toInt)
+      case None => None
+    }
 
     if (isNew) {
       participantId = None
       gmc = None
       dataSource = None
+      maybePriority = None
+      area = None
       issueStatus = Some(Draft)
       val days = param(request, "days").getOrElse("0").toInt
       dateLogged = Some(LocalDate.now().minusDays(days).toDate)
@@ -69,6 +78,8 @@ object DatatablesRequestBuilder {
     if (isSearch) {
       participantId = Some(search.get.toInt)
       gmc = None
+      maybePriority = None
+      area = None
       dateLogged = None
       issueStatus = None
       dataSource = None
@@ -83,7 +94,7 @@ object DatatablesRequestBuilder {
     log.info(s"sortCol=$sortCol sortDir=$sortDir sortColFromUI=$sortColFromUI sortOrderFromUI=$sortOrderFromUI")
 
     val sortCriteria : Option[(String, String)] = Some((sortColFromUI,sortOrderFromUI))
-    val searchCriteria = SearchCriteria(gmc, issueStatus = issueStatus, dataSource = dataSource, dateLogged = dateLogged, participantId = participantId)
+    val searchCriteria = SearchCriteria(gmc, issueStatus = issueStatus, dataSource = dataSource, dateLogged = dateLogged, priority = maybePriority, area = area, participantId = participantId)
 
     val searchRequest: SearchRequest = SearchRequest(offset, pageSize, searchCriteria, draw, sortCriteria)
     log.info(s"searchRequest: $searchRequest")

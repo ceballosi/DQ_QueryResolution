@@ -3,22 +3,23 @@
 # ~~~~
 
 # home page
-GET         /                     controllers.DqController.listIssues
-GET         /tmp/create/db        controllers.DqController.tmpMethod
+GET         /                      controllers.DqController.listIssues
+GET         /tmp/create/db         controllers.DqController.tmpMethod
 
-GET         /container            controllers.DqController.container
-POST        /list                 controllers.DqController.listAjaxAsync
-GET         /listGmcs             controllers.DqController.listGmcs
-GET         /listOrigins          controllers.DqController.listOrigins
+GET         /container             controllers.DqController.container
+POST        /list                  controllers.DqController.listAjaxAsync
+GET         /listGmcs              controllers.DqController.listGmcs
+GET         /listOrigins           controllers.DqController.listOrigins
+GET         /listPriorities        controllers.DqController.listPriorities
 
-GET         /export               controllers.DqController.export
-GET         /send                 controllers.DqController.sendNotifications
-GET         /reports              controllers.DqController.reports
-POST        /upload               controllers.DqController.upload
-POST        /changeStatus         controllers.DqController.changeStatus
-POST        /querychain           controllers.DqController.queryChain
-POST        /nextIssueId          controllers.DqController.nextIssueId
-POST        /save                 controllers.DqController.save
+GET         /export                controllers.DqController.export
+GET         /send                  controllers.DqController.sendNotifications
+GET         /reports               controllers.DqController.reports
+POST        /upload                controllers.DqController.upload
+POST        /changeStatus          controllers.DqController.changeStatus
+POST        /querychain            controllers.DqController.queryChain
+POST        /nextIssueId           controllers.DqController.nextIssueId
+POST        /save                  controllers.DqController.save
 
 # Map static resources from the /public folder to the /assets URL path
-GET         /assets/*file         controllers.Assets.versioned(path="/public", file: Asset)
+GET         /assets/*file          controllers.Assets.versioned(path="/public", file: Asset)

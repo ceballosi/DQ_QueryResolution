@@ -20,6 +20,7 @@ import scala.util.Try
 trait IssueTrackingDao extends BaseDao[Issue, Long] {
   def listGmcs: Future[Seq[String]]
   def listOrigins: Future[Seq[String]]
+  def listPriorities: Future[Seq[Int]]
   def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[Issue]]
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]]
   def findByCriteria(cr : SearchCriteria): Future[Seq[Issue]]
@@ -144,6 +145,7 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
       .filter(cr.issueStatus)(v => d => d.status === v)
       .filter(cr.priority)(v => d => d.priority === v)
       .filter(cr.dataSource)(v => d => d.dataSource === v)
+      .filter(cr.area)(v => d => d.area === v)
       .filter(cr.dateLogged)(v => d => d.dateLogged > v)
       .filter(cr.participantId)(v => d => d.participantId === v)
       .query
@@ -174,6 +176,11 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
   def listOrigins: Future[Seq[String]] = {
     val query = loggedIssues.map(_.dataSource ).distinct.sorted
+    db.run(query.result)
+  }
+
+  def listPriorities: Future[Seq[Int]] = {
+    val query = loggedIssues.map(_.priority ).distinct.sorted
     db.run(query.result)
   }
 

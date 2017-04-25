@@ -52,6 +52,13 @@ object UiUtils {
     Json.toJson(list)
   }
 
+  def prioritiesToJson(priorities: Seq[Int]): JsValue = {
+    val list: Seq[JsObject] = priorities.map { priority =>
+      Json.obj("priority" -> JsString(priority.toString))
+    }
+    Json.toJson(list)
+  }
+
   def reportsToJson(reportSeq: Seq[String]): JsValue = {
     val aReport = ("fake","data","for","example")
     var reports = ListBuffer(aReport)

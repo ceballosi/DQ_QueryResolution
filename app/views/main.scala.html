@@ -40,18 +40,18 @@
             <p> </p>
         </header>
         <div class="container-fluid body-content">
-            <nav>
+            <nav style="margin-left: 5px;">
                 <p class="dq-all">
-                    <a id="allIssues" href="/dq-filters/">&nbsp;All Issues</a>
+                    <a id="allIssues" href="/dq-filters/">All Issues</a>
                     <br>
                     <br>
-                    <a id="newIssues" href="/">&nbsp;New issues</a>
+                    <a id="newIssues" href="/">New issues</a>
                 </p>
-                    <div class="dqmsSelect form-group-sm">&nbsp;GMCs
+                    <div class="dqmsSelect form-group-sm">GMCs
                         <select id="gmcSelect" class="input-sm">
                         </select>
                     </div>
-                    <div class="dqmsSelect form-group-sm">&nbsp;Status
+                    <div class="dqmsSelect form-group-sm">Status
                         <select id="statusSelect" class="input-sm">
                             <option>all</option>
                             <option>Draft</option>
@@ -61,10 +61,37 @@
                             <option>Archived</option>
                         </select>
                     </div>
-                    <div class="dqmsSelect form-group-sm">&nbsp;Data Source
+                    <div class="dqmsSelect form-group-sm">Data Source
                         <select id="originSelect" class="input-sm">
                         </select>
                     </div>
+                <div class="dqmsSelect form-group-sm hide">Priority
+                    <select id="prioritySelect" class="input-sm">
+                    </select>
+                </div>
+                <div class="dqmsSelect form-group-sm hide">Cancer/RD
+                    <select id="areaSelect" class="input-sm">
+                        <option>all</option>
+                        <option>Cancer</option>
+                        <option>RD</option>
+                    </select>
+                </div>
+                <div class="row hide">
+                    <div class="col-sm-12 dqmsSelect">Date Logged</div>
+                    <div class="col-sm-6">
+                        <div class="form-group dqmsSelect">
+                            <label for="startDays">From</label>
+                            <input type="text" class="form-control input-sm dqmsSelect" style="width: 50px;" id="startDays" name="startDays" placeholder="7" maxlength="4" value="-" size="4" required>days ago
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-group dqmsSelect">
+                            <label for="endDays">To</label>
+                            <input type="text" class="form-control input-sm dqmsSelect" style="width: 50px;" id="endDays" name="endDays"  maxlength="4" value="-" size="4" required>days ago
+                        </div>
+                    </div>
+                </div>
             </nav>
             <section id="main">
             @content

@@ -26,6 +26,7 @@ package object dao {
                             issueStatus: Option[Status] = None,
                             priority: Option[Int] = None,
                             dataSource: Option[String] = None,
+                            area: Option[String] = None,
                             dateLogged: Option[Date] = None,
                             participantId: Option[Int] = None,
                             searchValue: Option[String] = None
