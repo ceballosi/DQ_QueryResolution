@@ -803,7 +803,8 @@ $(document).ready(function () {
         format: 'dd/mm/yyyy',
         todayBtn: "linked",
         language: "en-GB",
-        autoclose: true
+        autoclose: true,
+        todayHighlight: true
     });
 
 });
