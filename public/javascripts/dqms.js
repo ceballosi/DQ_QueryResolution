@@ -57,7 +57,7 @@ function loadIssues() {
     });
 }
 
-function getDate() {
+function getDateTime() {
     var date = new Date(),
         year = date.getFullYear(),
         month = (date.getMonth() + 1).toString(),
@@ -71,6 +71,16 @@ function getDate() {
         second = date.getSeconds().toString(),
         formatedSecond = (second.length === 1) ? ("0" + second) : second;
     return formatedDay + "/" + formatedMonth + "/" + year + " " + formatedHour + ':' + formatedMinute + ':' + formatedSecond;
+};
+//could make this more generic e.g make dt optional
+function getDate(dt) {
+    var date = dt,
+        year = date.getFullYear(),
+        month = (date.getMonth() + 1).toString(),
+        formatedMonth = (month.length === 1) ? ("0" + month) : month,
+        day = date.getDate().toString(),
+        formatedDay = (day.length === 1) ? ("0" + day) : day;
+    return formatedDay + "/" + formatedMonth + "/" + year;
 };
 
 function displayQChain(el) {
@@ -316,9 +326,9 @@ function buildFilter() {
     var origin = $('#originSelect').val() == 'all' ? '' : '&origin=' + $('#originSelect').val();
     var priority = $('#prioritySelect').val() == 'all' ? '' : '&priority=' + $('#prioritySelect').val();
     var area = $('#areaSelect').val() == 'all' ? '' : '&area=' + $('#areaSelect').val();
-    var startDays = $('#startDays').val() == '-' ? '' : '&startDays=' + $('#startDays').val();
-    var endDays = $('#endDays').val() == '-' ? '' : '&endDays=' + $('#endDays').val();
-    return gmc + status + origin + priority + area + startDays + endDays;
+    var startDate = $('#startDate').val() == '-' ? '' : '&startDate=' + $('#startDate').val();
+    var endDate = $('#endDate').val() == '-' ? '' : '&endDate=' + $('#endDate').val();
+    return gmc + status + origin + priority + area + startDate + endDate;
 }
 
 function filterTable(tableIssues, url, e) {
@@ -332,8 +342,8 @@ function resetInputs() {
     $('#originSelect').val('all');
     $('#prioritySelect').val('all');
     $('#areaSelect').val('all');
-    $('#startDays').val('-');
-    $('#endDays').val('-');
+    $('#startDate').val('');
+    $('#endDate').val('');
 }
 
 function getParameterByName(name, url) {
@@ -354,8 +364,8 @@ function exportCsv() {
     var origin = null;
     var priority = null;
     var area = null;
-    var startDays = null;
-    var endDays = null;
+    var startDate = null;
+    var endDate = null;
     var isNew = false;
     var allIssues = false;
     var split = currentFilter.split("?");
@@ -379,11 +389,11 @@ function exportCsv() {
             if (params[i].startsWith("area=")) {
                 area = params[i].substring(params[i].indexOf("=") + 1);
             }
-            if (params[i].startsWith("startDays=")) {
-                startDays = params[i].substring(params[i].indexOf("=") + 1);
+            if (params[i].startsWith("startDate=")) {
+                startDate = params[i].substring(params[i].indexOf("=") + 1);
             }
-            if (params[i].startsWith("endDays=")) {
-                endDays = params[i].substring(params[i].indexOf("=") + 1);
+            if (params[i].startsWith("endDate=")) {
+                endDate = params[i].substring(params[i].indexOf("=") + 1);
             }
             if (params[i].startsWith("filter=new")) {
                 isNew = true;
@@ -398,7 +408,7 @@ function exportCsv() {
         cleanHiddenInputs();
     }
 
-    if (existingGmc || status || origin || priority || area || startDays || endDays) {
+    if (existingGmc || status || origin || priority || area || startDate || endDate) {
         cleanHiddenInputs();
         if (existingGmc) {
             $('#exportIssuesForm').append('<input type="hidden" id="gmc" name="gmc" value="" />');
@@ -420,13 +430,13 @@ function exportCsv() {
             $('#exportIssuesForm').append('<input type="hidden" id="area" name="area" value="" />');
             $(':hidden#area').val(area);
         }
-        if (startDays) {
-            $('#exportIssuesForm').append('<input type="hidden" id="startDays" name="startDays" value="" />');
-            $(':hidden#startDays').val(startDays);
+        if (startDate) {
+            $('#exportIssuesForm').append('<input type="hidden" id="startDatehidden" name="startDate" value="" />');
+            $(':hidden#startDatehidden').val(startDate);
         }
-        if (endDays) {
-            $('#exportIssuesForm').append('<input type="hidden" id="endDays" name="endDays" value="" />');
-            $(':hidden#endDays').val(endDays);
+        if (endDate) {
+            $('#exportIssuesForm').append('<input type="hidden" id="endDatehidden" name="endDate" value="" />');
+            $(':hidden#endDatehidden').val(endDate);
         }
     }
     if (isNew) {
@@ -445,8 +455,8 @@ function exportCsv() {
         $(':hidden#origin').remove();
         $(':hidden#priority').remove();
         $(':hidden#area').remove();
-        $(':hidden#startDays').remove();
-        $(':hidden#endDays').remove();
+        $(':hidden#startDatehidden').remove();  //id name startDate/endDate clash with main form
+        $(':hidden#endDatehidden').remove();
     }
 }
 
@@ -675,7 +685,7 @@ function bindAddForm() {
             success: function (data) {
                 issueId = data;
                 $("#addIssueId").val(issueId);
-                $("#addDateLogged").val(getDate());
+                $("#addDateLogged").val(getDateTime());
                 addFormValidr.form();
             },
             error: function (jqXHR, textStatus, errorThrown) {
@@ -730,14 +740,21 @@ $(document).ready(function () {
     $("#newIssues").click(function (e) {
         resetInputs();
         $('#statusSelect').val('Open');
-        $('#startDays').val('7');
+        var dt = new Date();
+        dt.setDate(dt.getDate()-7);
+        $('#startDate').datepicker('update', getDate(dt));
 
         //var url = "/list?filter=new&days=30";   //should be last 30days by default
         var url = "/list?" + buildFilter();
         filterTable(tableIssues, url, e);
     });
 
-    $('#nav').on('change', '#gmcSelect, #statusSelect, #originSelect, #prioritySelect, #areaSelect, #startDays, #endDays', function (e) {
+    $('#nav').on('change', '#gmcSelect, #statusSelect, #originSelect, #prioritySelect, #areaSelect', function (e) {
+        var url = "/list?" + buildFilter();
+        filterTable(tableIssues, url, e);
+    });
+
+    $('#nav').on('changeDate blur', '#startDate, #endDate', function (e) {
         var url = "/list?" + buildFilter();
         filterTable(tableIssues, url, e);
     });
@@ -781,6 +798,13 @@ $(document).ready(function () {
     //$(document ).on( "click", "TD.qchain", function() {
     //    displayQChain(this);
     //});
+
+    $('.datepicker').datepicker({
+        format: 'dd/mm/yyyy',
+        todayBtn: "linked",
+        language: "en-GB",
+        autoclose: true
+    });
 
 });
 

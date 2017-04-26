@@ -7,7 +7,10 @@ import dao.SearchCriteria
 import dao.Searching.SearchRequest
 import domain.{Draft, Status}
 import org.joda.time.LocalDate
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.slf4j.{Logger, LoggerFactory}
+
+import scala.util.{Failure, Success, Try}
 
 /**
   * This builder services the requirements of the UI Datatables.js component
@@ -56,11 +59,11 @@ object DatatablesRequestBuilder {
     var area = param(request, "area")
 
 
-    var dateLoggedStart = parseDaysToOptionDate(param(request, "startDays"))
-    var dateLoggedEnd = parseDaysToOptionDate(param(request, "endDays"))
+    var dateLoggedStart = parseDateToOptionDate(param(request, "startDate"))
+    var dateLoggedEnd = parseDateToOptionDate(param(request, "endDate"))
 
-    println("startDays=" + param(request, "startDays") + " dateLoggedStart=" + dateLoggedStart)
-    println("endDays=" + param(request, "endDays") + " dateLoggedEnd=" + dateLoggedEnd)
+    println("startDate=" + param(request, "startDate") + " dateLoggedStart=" + dateLoggedStart)
+    println("endDate=" + param(request, "endDate") + " dateLoggedEnd=" + dateLoggedEnd)
 
     var maybePriority: Option[Int] = param(request, "priority") match {
       case Some(p) if p.length > 0 => Some(p.toInt)
@@ -106,6 +109,7 @@ object DatatablesRequestBuilder {
   }
 
 
+  //may not be needed now using Dates
   def parseDaysToOptionDate(possibleDays: Option[String]): Option[Date] = {
     //adds custom unapply to Int for String pattern match
     object Int {
@@ -119,6 +123,22 @@ object DatatablesRequestBuilder {
       }
       case None => None
     }
+
+  }
+
+
+  def parseDateToOptionDate(tryStringAsDate: Option[String]): Option[Date] = {
+    val dateTimeFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy")
+
+    val tryDate: Try[Date] = Try(LocalDate.parse(tryStringAsDate.getOrElse(""), dateTimeFormat).toDate)
+
+    val maybeDate: Option[Date] = tryDate match {
+      case Success(date) => Some(date)
+      case Failure(e) => None
+    }
+
+    println("got " + maybeDate)
+    maybeDate
 
   }
 
