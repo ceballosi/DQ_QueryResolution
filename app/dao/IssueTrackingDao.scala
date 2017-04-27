@@ -21,9 +21,9 @@ trait IssueTrackingDao extends BaseDao[Issue, Long] {
   def listGmcs: Future[Seq[String]]
   def listOrigins: Future[Seq[String]]
   def listPriorities: Future[Seq[Int]]
-  def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[Issue]]
+  def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[IssueView]]
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]]
-  def findByCriteria(cr : SearchCriteria): Future[Seq[Issue]]
+  def findByCriteria(cr : SearchCriteria): Future[Seq[IssueView]]
   def updateQueryDate(newDate: Date, issue: Issue): Future[Int]
   def updateResolutionDate(newDate: Date, issue: Issue): Future[Int]
   def changeStatus(newStatus: Status, issue: Issue): Boolean
@@ -56,6 +56,7 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
   override def toTable = TableQuery[IssueTable]
 
   private val loggedIssues = toTable
+  private val issuesView = TableQuery[IssueViewTable]
   private val queryChains = TableQuery[QueryChainTable]
 
   // Custom column mapping
@@ -70,24 +71,24 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
   private val columnMap = Map(
     //id is not in map - i guess this just means we don't expect to query on it (never exposed to UI)
-    "status" -> { (t: IssueTable) => t.status },
-    "DT_RowId" -> { (t: IssueTable) => t.issueId},
-    "dateLogged" -> { (t: IssueTable) => t.dateLogged},
-    "participantId" -> { (t: IssueTable) => t.participantId},
-    "dataSource" -> { (t: IssueTable) => t.dataSource},
-    "priority" -> { (t: IssueTable) => t.priority},
-    "dataItem" -> { (t: IssueTable) => t.dataItem},
-    "shortDesc" -> { (t: IssueTable) => t.shortDesc},
-    "description" -> { (t: IssueTable) => t.description},
-    "gmc" -> { (t: IssueTable) => t.gmc},
-    "lsid" -> { (t: IssueTable) => t.lsid},
-    "area" -> { (t: IssueTable) => t.area},
-    "familyId" -> { (t: IssueTable) => t.familyId},
-    "queryDate" -> { (t: IssueTable) => t.queryDate},
-    "resolutionDate" -> { (t: IssueTable) => t.resolutionDate},
-    "weeksOpen" -> { (t: IssueTable) => t.weeksOpen},
-    "escalation" -> { (t: IssueTable) => t.escalation},
-    "notes" -> { (t: IssueTable) => t.notes}
+    "status" -> { (t: IssueViewTable) => t.status },
+    "DT_RowId" -> { (t: IssueViewTable) => t.issueId},
+    "dateLogged" -> { (t: IssueViewTable) => t.dateLogged},
+    "participantId" -> { (t: IssueViewTable) => t.participantId},
+    "dataSource" -> { (t: IssueViewTable) => t.dataSource},
+    "priority" -> { (t: IssueViewTable) => t.priority},
+    "dataItem" -> { (t: IssueViewTable) => t.dataItem},
+    "shortDesc" -> { (t: IssueViewTable) => t.shortDesc},
+    "description" -> { (t: IssueViewTable) => t.description},
+    "gmc" -> { (t: IssueViewTable) => t.gmc},
+    "lsid" -> { (t: IssueViewTable) => t.lsid},
+    "area" -> { (t: IssueViewTable) => t.area},
+    "familyId" -> { (t: IssueViewTable) => t.familyId},
+    "queryDate" -> { (t: IssueViewTable) => t.queryDate},
+    "resolutionDate" -> { (t: IssueViewTable) => t.resolutionDate},
+    "weeksOpen" -> { (t: IssueViewTable) => t.weeksOpen},
+    "escalation" -> { (t: IssueViewTable) => t.escalation},
+    "notes" -> { (t: IssueViewTable) => t.notes}
   )
 
   //next issue id from separate explicit db sequence - issueid_id_seq
@@ -128,18 +129,17 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
   def findAllQueryChain: Future[Seq[QueryChain]] = db.run(queryChains.sortBy(_.id).result)
 
-  private def queryBySortCriteria(query: Query[IssueTable, IssueTable#TableElementType, Seq], sort: (String, String)) = {
-        val rep = columnMap.getOrElse(sort._1, throw new RuntimeException(s"Invalid column used for sorting ${sort._1}"))
-      val orderedRep = sort._2 match {
-        case "desc" => (t: IssueTable) => ColumnOrdered(rep(t), slick.ast.Ordering(slick.ast.Ordering.Desc))
-        case _ => (t: IssueTable) => ColumnOrdered(rep(t), slick.ast.Ordering(slick.ast.Ordering.Asc))
-      }
-      query.sortBy(orderedRep)
-
+  private def queryBySortCriteria(query: Query[IssueViewTable, IssueViewTable#TableElementType, Seq], sort: (String, String)) = {
+    val rep = columnMap.getOrElse(sort._1, throw new RuntimeException(s"Invalid column used for sorting ${sort._1}"))
+    val orderedRep = sort._2 match {
+      case "desc" => (t: IssueViewTable) => ColumnOrdered(rep(t), slick.ast.Ordering(slick.ast.Ordering.Desc).nullsLast)
+      case _ => (t: IssueViewTable) => ColumnOrdered(rep(t), slick.ast.Ordering(slick.ast.Ordering.Asc).nullsFirst)
+    }
+    query.sortBy(_.id).sortBy(orderedRep) //mysteriously this generates sql with reversed col order e.g. 'order by "weeks_open" nulls first, "id" '
   }
 
   private def queryBySearchCriteria(cr : SearchCriteria)  = {
-    MaybeFilter(loggedIssues)
+    MaybeFilter(issuesView)
       .filter(cr.gmc)(v => d => d.gmc === v) // v => parameter value passed in  d=> Table data element
       .filter(cr.issueId)(v => d => d.issueId === v)
       .filter(cr.issueStatus)(v => d => d.status === v)
@@ -164,9 +164,11 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     Await.result(g, 30 seconds)
   }
 
+  def findAllIssuesView: Future[Seq[IssueView]] = db.run(issuesView.result)
+
   def findAll: Future[Seq[Issue]] = db.run(loggedIssues.result)
 
-  def findByCriteria(cr : SearchCriteria): Future[Seq[Issue]] = {
+  def findByCriteria(cr : SearchCriteria): Future[Seq[IssueView]] = {
     db.run(queryBySearchCriteria(cr).result)
   }
 
@@ -298,7 +300,7 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
 
 
-  def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[Issue]] = {
+  def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[IssueView]] = {
     var query = queryBySearchCriteria(searchRequest.searchCriteria)
 
     searchRequest.sortCriteria.foreach { field =>
@@ -312,7 +314,7 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
       query.length.result
     )
 
-    val eventualPageResult: Future[SearchResult[Issue]] = filterIssuesCount.flatMap {
+    val eventualPageResult: Future[SearchResult[IssueView]] = filterIssuesCount.flatMap {
       total => issuesFuture.map {
         issues => {
           SearchResult(issues, total)
@@ -368,6 +370,53 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     override def * : ProvenShape[Issue] = (id, issueId, status, dateLogged, participantId, dataSource, priority,
       dataItem, shortDesc, gmc, lsid, area, description, familyId, queryDate, weeksOpen, resolutionDate,
       escalation, notes) <>((Issue.apply _).tupled, Issue.unapply)
+
+  }
+
+  /** **************  Table definition ***************/
+  class IssueViewTable(tag: Tag) extends Table[IssueView](tag, "issueview") {
+    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+
+    def issueId: Rep[String] = column[String]("issue_id")
+
+    def status = column[Status]("status")
+
+    def dateLogged = column[Date]("date_logged")
+
+    def participantId = column[Int]("participant_id")
+
+    def dataSource = column[String]("data_source")
+
+    def priority = column[Int]("priority")
+
+    def dataItem = column[String]("data_item")
+
+    def shortDesc = column[String]("short_desc")
+
+    def gmc = column[String]("gmc")
+
+    def lsid = column[Option[String]]("lsid")
+
+    def area = column[String]("area")
+
+    def description = column[String]("description")
+
+    def familyId = column[Option[String]]("family_id")
+
+    def queryDate = column[Option[Date]]("query_date")
+
+    def weeksOpen = column[Option[Int]]("weeks_open")
+
+    def resolutionDate = column[Option[Date]]("resolution_date")
+
+    def escalation = column[Option[Date]]("escalation")
+
+    def notes = column[Option[String]]("notes")
+
+
+    override def * : ProvenShape[IssueView] = (id, issueId, status, dateLogged, participantId, dataSource, priority,
+      dataItem, shortDesc, gmc, lsid, area, description, familyId, queryDate, weeksOpen, resolutionDate,
+      escalation, notes) <>((IssueView.apply _).tupled, IssueView.unapply)
 
   }
 

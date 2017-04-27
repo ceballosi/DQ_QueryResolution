@@ -445,6 +445,14 @@ function exportCsv() {
         $('#exportIssuesForm').append('<input type="hidden" id="days" name="days" value="30" />');
     }
 
+    //add sort to export from table
+    var sortCol = tableIssues.order()[0][0];
+    var sortDir = tableIssues.order()[0][1];
+    $('#exportIssuesForm').append('<input type="hidden" id="sortColKey" name="order[0][column]" value="" />');
+    $(':hidden#sortColKey').val(sortCol);
+    $('#exportIssuesForm').append('<input type="hidden" id="sortDirKey" name="order[0][dir]" value="" />');
+    $(':hidden#sortDirKey').val(sortDir);
+
     $(':hidden#length').val("60000");       //TODO not sure what limit if any should be applied
 
     function cleanHiddenInputs() {
@@ -457,6 +465,8 @@ function exportCsv() {
         $(':hidden#area').remove();
         $(':hidden#startDatehidden').remove();  //id name startDate/endDate clash with main form
         $(':hidden#endDatehidden').remove();
+        $(':hidden#sortColKey').remove();
+        $(':hidden#sortDirKey').remove();
     }
 }
 
@@ -660,7 +670,6 @@ function bindAddForm() {
                 $("#addDataSource").val(rowData.dataSource);
                 $("#addDataItem").val(rowData.dataItem);
                 $("#addShortDesc").val(rowData.shortDesc);
-                $("#addArea").val(rowData.area);
                 $("#addDescription").val(rowData.description);
                 $("#addNotes").val(rowData.notes);
                 found = true;

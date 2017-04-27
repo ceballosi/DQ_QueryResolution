@@ -43,7 +43,7 @@ class DqController @Inject()(issueTracking: IssueTrackingService, saveIssueHelpe
 
     val searchRequest: SearchRequest = DatatablesRequestBuilder.build(req.body ++ req.queryString)
 
-    val findResult: Future[SearchResult[Issue]] = issueTracking.findBySearchRequest(searchRequest)
+    val findResult: Future[SearchResult[IssueView]] = issueTracking.findBySearchRequest(searchRequest)
 
     findResult.map {
       pageResult => {
@@ -106,7 +106,7 @@ class DqController @Inject()(issueTracking: IssueTrackingService, saveIssueHelpe
 
     val searchRequest: SearchRequest = DatatablesRequestBuilder.build(req.body ++ req.queryString)
 
-    val findResult: Future[SearchResult[Issue]] = issueTracking.findBySearchRequest(searchRequest)
+    val findResult: Future[SearchResult[IssueView]] = issueTracking.findBySearchRequest(searchRequest)
 
     val csv = new StringBuilder(Issue.csvHeaderForUI + "\n")
 

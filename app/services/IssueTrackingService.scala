@@ -8,13 +8,13 @@ import javax.inject.{Inject, Singleton}
 import dao.Searching.{SearchRequest, SearchResult}
 import dao.{IssueTrackingDao, SearchCriteria}
 import domain._
-import scala.concurrent.duration._
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.{Try}
+import scala.util.Try
 
 trait IssueTrackingService {
   def allIssues: Future[Seq[Issue]]
@@ -22,9 +22,9 @@ trait IssueTrackingService {
   def listOrigins: Future[Seq[String]]
   def listPriorities: Future[Seq[Int]]
   def allIssuesNow: List[Issue]
-  def findByCriteria(cr : SearchCriteria): Future[Seq[Issue]]
+  def findByCriteria(cr : SearchCriteria): Future[Seq[IssueView]]
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]]
-  def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[Issue]]
+  def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[IssueView]]
   def importFile(file: File): List[(Int, Throwable)]
   def changeStatus(newStatus: Status, issueIds: List[String]): Future[List[(String, Throwable)]]
   def save(issue: Issue): (Boolean, String)
@@ -47,7 +47,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
 
 
 
-  def findBySearchRequest(searchRequest: SearchRequest) : Future[SearchResult[Issue]] =  {
+  def findBySearchRequest(searchRequest: SearchRequest) : Future[SearchResult[IssueView]] =  {
     issueTrackingDao.findBySearchRequest(searchRequest)
   }
 
@@ -71,7 +71,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
 
   def listPriorities: Future[Seq[Int]] = issueTrackingDao.listPriorities
 
-  def findByCriteria(searchCriteria : SearchCriteria): Future[Seq[Issue]] =
+  def findByCriteria(searchCriteria : SearchCriteria): Future[Seq[IssueView]] =
     issueTrackingDao.findByCriteria(searchCriteria)
 
   def allIssuesNow: List[Issue] = {
