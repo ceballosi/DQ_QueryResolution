@@ -18,7 +18,7 @@ object LdapClient {
   val connectionConfig = new ConnectionConfig()
   connectionConfig setConnectTimeout Duration.ofMillis(500)
   connectionConfig setResponseTimeout Duration.ofMillis(1000)
-  connectionConfig setLdapUrl("ldap://10.10.0.20:" + port)
+  connectionConfig setLdapUrl("ldap://10.10.0.20:" + port) //works through GeL core services ('cs') VPN
 
   val connectionFactory = new DefaultConnectionFactory()
   connectionFactory.setConnectionConfig(connectionConfig)

@@ -1,7 +1,7 @@
 @import domain._
 @import org.pac4j.core.profile.CommonProfile
 
-@(issueList: Seq[Issue], profiles: List[CommonProfile])
+@(issueList: Seq[Issue], profiles: List[CommonProfile], baseUrl: String)
 @*
 * Call the `main` with arguments. The first
 * argument is a `String` with the title of the page, the second
@@ -11,7 +11,7 @@
 @*
 JUST A SIMPLE VIEW AS PART OF WORKFLOW DEFINITION
 *@
-@main("Issue Resolution System") {
+@main("Issue Resolution System", baseUrl) {
     <script>
             $(function () {
                 $('#uiIssuesTable').DataTable();

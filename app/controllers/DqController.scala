@@ -12,6 +12,7 @@ import org.pac4j.play.PlayWebContext
 import org.pac4j.play.scala.Security
 import org.pac4j.play.store.PlaySessionStore
 import org.slf4j.{Logger, LoggerFactory}
+import play.api.Configuration
 import play.api.libs.Files.TemporaryFile
 import play.api.libs.json.Json
 import play.api.libs.json.Json._
@@ -25,11 +26,13 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 @Singleton
-class DqController @Inject()(val config: Config, val playSessionStore: PlaySessionStore, override val ec: HttpExecutionContext)
-                            (issueTracking: IssueTrackingService, saveIssueHelper: SaveIssueHelper, mailService: MailService)
+class DqController @Inject()(val config: Config, val playSessionStore: PlaySessionStore, override val ec: HttpExecutionContext,
+                            issueTracking: IssueTrackingService, saveIssueHelper: SaveIssueHelper, mailService: MailService,
+                             configuration: Configuration)
                             (implicit executionContext: ExecutionContext) extends Controller with Security[CommonProfile] {
 
-  val log: Logger = LoggerFactory.getLogger(this.getClass())
+  val log: Logger = LoggerFactory.getLogger(getClass)
+  val baseUrl: String = configuration.getString("play.http.context") get
 
   //pac4j profile
   def getProfiles(implicit request: RequestHeader): List[CommonProfile] = {
@@ -45,7 +48,7 @@ class DqController @Inject()(val config: Config, val playSessionStore: PlaySessi
     * a path of `/`.
     */
   def listIssues = Action.async { implicit req =>
-    issueTracking.allIssues.map(issues => Ok(views.html.issues(issues, getProfiles(req))))
+    issueTracking.allIssues.map(issues => Ok(views.html.issues(issues, getProfiles(req), baseUrl)))
   }
 
   //TODO : To be removed (Just a temporary method to create a table using model)
@@ -91,7 +94,7 @@ class DqController @Inject()(val config: Config, val playSessionStore: PlaySessi
 
 
   def container = Action {
-    Ok(views.html.container())
+    Ok(views.html.container(baseUrl))
   }
 
 
