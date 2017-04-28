@@ -1,1 +1,1 @@
-# DQ_QueryResolution
+# DQMS
