@@ -9,7 +9,7 @@ function loadIssues() {
         "serverSide": true,
         type: 'POST',
         "ajax": {
-            "url": "/list",
+            "url": "/dqms/list",
             "type": "POST"
         },
         //"autoWidth": false,
@@ -91,7 +91,7 @@ function displayQChain(el) {
     formData.append('selectedIssue', issueId);
 
     $.ajax({
-        url: '/querychain',
+        url: '/dqms/querychain',
         data: formData,
         type: 'POST',
         contentType: false,
@@ -123,7 +123,7 @@ function displayQChain(el) {
 
 function loadGMCs() {
     $.ajax({
-        url: "/listGmcs",
+        url: "/dqms/listGmcs",
         success: function (data) {
             if (data.length > 0) {
 
@@ -147,7 +147,7 @@ function loadGMCs() {
 
 function loadOrigins() {
     $.ajax({
-        url: "/listOrigins",
+        url: "/dqms/listOrigins",
         success: function (data) {
             if (data.length > 0) {
 
@@ -170,7 +170,7 @@ function loadOrigins() {
 }
 function loadPriorities() {
     $.ajax({
-        url: "/listPriorities",
+        url: "/dqms/listPriorities",
         success: function (data) {
             if (data.length > 0) {
 
@@ -204,7 +204,7 @@ function sendSelected(e) {
         });
 
         var currentFilter = tableIssues.ajax.url();
-        url = "/send?selectedIssues=" + selectedIds.join();
+        url = "/dqms/send?selectedIssues=" + selectedIds.join();
         tableIssues.ajax.url(url).load();
         tableIssues.ajax.url(currentFilter).load();
     }
@@ -287,7 +287,7 @@ function statusChange(selectedStatus) {
         formData.append('selectedIssues', selectedIds);
 
         $.ajax({
-            url: '/changeStatus',
+            url: '/dqms/changeStatus',
             data: formData,
             type: 'POST',
             contentType: false,
@@ -476,7 +476,7 @@ function importCsv(name) {
     var formData = new FormData();
     formData.append('file', file);
     $.ajax({
-        url: '/upload',
+        url: '/dqms/upload',
         data: formData,
         type: 'POST',
         contentType: false,
@@ -514,7 +514,7 @@ function importCsv(name) {
 function reportDisplay(name) {
     var formData = new FormData();
     $.ajax({
-        url: '/reports',
+        url: '/dqms/reports',
         data: formData,
         contentType: false,
         processData: false,
@@ -545,7 +545,7 @@ function saveIssue() {
     formData.append("gmc", $("#addGMC").val());
 
     $.ajax({
-        url: '/save',
+        url: '/dqms/save',
         data: formData,
         type: 'POST',
         contentType: false,
@@ -686,7 +686,7 @@ function bindAddForm() {
             return;
         }
         $.ajax({
-            url: '/nextIssueId',
+            url: '/dqms/nextIssueId',
             data: formData,
             type: 'POST',
             contentType: false,
@@ -742,8 +742,8 @@ $(document).ready(function () {
 
     $("#allIssues").click(function (e) {
         resetInputs();
-        var url = "/list?" + buildFilter();
-        filterTable(tableIssues, "/list", e);
+        var url = "/dqms/list?" + buildFilter();
+        filterTable(tableIssues, "/dqms/list", e);
     });
 
     $("#newIssues").click(function (e) {
@@ -754,17 +754,17 @@ $(document).ready(function () {
         $('#startDate').datepicker('update', getDate(dt));
 
         //var url = "/list?filter=new&days=30";   //should be last 30days by default
-        var url = "/list?" + buildFilter();
+        var url = "/dqms/list?" + buildFilter();
         filterTable(tableIssues, url, e);
     });
 
     $('#nav').on('change', '#gmcSelect, #statusSelect, #originSelect, #prioritySelect, #areaSelect', function (e) {
-        var url = "/list?" + buildFilter();
+        var url = "/dqms/list?" + buildFilter();
         filterTable(tableIssues, url, e);
     });
 
     $('#nav').on('changeDate blur', '#startDate, #endDate', function (e) {
-        var url = "/list?" + buildFilter();
+        var url = "/dqms/list?" + buildFilter();
         filterTable(tableIssues, url, e);
     });
 
