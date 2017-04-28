@@ -1,4 +1,4 @@
-name := "DQ_QueryResolution"
+name := "DQMS"
 
 version := "0.1"
 
