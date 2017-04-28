@@ -28,3 +28,6 @@ libraryDependencies ++= Seq(
   "org.pac4j" % "pac4j-http" % "2.0.0-RC2-SNAPSHOT"
 )
 
+
+
+fork in run := true
