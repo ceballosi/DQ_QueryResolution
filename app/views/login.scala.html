@@ -1,0 +1,39 @@
+@(callbackUrl: String)
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Login</title>
+
+        <!--fa-->
+        <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+
+        <!--Bootstrap stylesheets-->
+        <link rel="stylesheet" type="text/css" href="@routes.Assets.versioned("DataTables/Bootstrap-3.3.7/css/bootstrap.css")">
+        <link rel="stylesheet" type="text/css" href="@routes.Assets.versioned("DataTables/Buttons-1.2.4/css/buttons.bootstrap.css")">
+
+        <!--Custom stylesheet-->
+        <link rel="stylesheet" media="screen" href="@routes.Assets.versioned("stylesheets/login.css")">
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-offset-5 col-md-3">
+                    <form action="@callbackUrl" method="post" class="form-login">
+                        <h4>Login</h4>
+                        <input type="text" name="username" class="form-control" placeholder="Username" />
+                        <br/>
+                        <input type="password" name="password" class="form-control" placeholder="Password" />
+                        <br/>
+                        <div class="wrapper">
+                            <span class="group-btn">
+                                <button type="submit" class="btn btn-primary btn-md">Login <i class="fa fa-sign-in"></i></button>
+                            </span>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

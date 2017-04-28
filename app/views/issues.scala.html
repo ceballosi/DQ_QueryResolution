@@ -1,6 +1,7 @@
 @import domain._
+@import org.pac4j.core.profile.CommonProfile
 
-@(issueList: Seq[LoggedIssue])
+@(issueList: Seq[LoggedIssue], profiles: List[CommonProfile])
 @*
 * Call the `main` with arguments. The first
 * argument is a `String` with the title of the page, the second
