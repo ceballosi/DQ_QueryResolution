@@ -5,7 +5,7 @@ import java.util.Date
 import org.joda.time.format.ISODateTimeFormat
 import play.api.libs.json._
 
-case class Issue(//19 fields (out of possible 22!)
+case class IssueView(//19 fields (out of possible 22!)
                  id: Long,
                  issueId: String,
                  status: Status,
@@ -25,25 +25,25 @@ case class Issue(//19 fields (out of possible 22!)
                  resolutionDate: Option[Date],
                  escalation: Option[Date],
                  notes: Option[String]
-                ) {
+                ) extends {
 
   def toCsvForUI(): String = {
-    val dateLoggedStr = Issue.dateToIsoStr(dateLogged)
+    val dateLoggedStr = IssueView.dateToIsoStr(dateLogged)
     val lsidStr = lsid.getOrElse("")
     val family = familyId.getOrElse("")
-    val querySent = Issue.dateToIsoStr(queryDate)
+    val querySent = IssueView.dateToIsoStr(queryDate)
     val weeks = weeksOpen.getOrElse("")
-    val resolvedDt = Issue.dateToIsoStr(resolutionDate)
-    val escalateDt = Issue.dateToIsoStr(escalation)
+    val resolvedDt = IssueView.dateToIsoStr(resolutionDate)
+    val escalateDt = IssueView.dateToIsoStr(escalation)
 
     s"$issueId,$status,$dateLoggedStr,$participantId,$dataSource,$priority,$dataItem,$shortDesc,$gmc,$lsidStr,$area,$description,$family,$querySent,$weeks,$resolvedDt,$escalateDt,$notes"
   }
 }
 
-object Issue {
+object IssueView {
 
-  implicit val loggedIssueWrites = new Writes[Issue] {
-    def writes(c: Issue): JsValue = {
+  implicit val loggedIssueViewWrites = new Writes[IssueView] {
+    def writes(c: IssueView): JsValue = {
       Json.obj(
         "select" -> "", //UI selection col
         "DT_RowId" -> Json.toJson(c.issueId),

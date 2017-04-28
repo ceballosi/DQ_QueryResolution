@@ -13,25 +13,54 @@ JUST A SIMPLE VIEW AS PART OF WORKFLOW DEFINITION
         <thead class="thead-default">
             <tr>
                 <th>Select</th>
-                <th> Status </th>
-                <th> Issue Id </th>
-                <th> Logged By </th>
-                <th> Date Logged </th>
-                <th> Issue Origin </th>
-                <th> GMC </th>
-                <th> Description </th>
-                <th> PatientId </th>
+                <th>Issue Id<div style="display: block;width: 51px;clear: both;"></div> </th>
+                <th>Status<div style="display: block;width: 5px;clear: both;"></div></th>
+                <th>Date Logged </th>
+                <th>Participant Id<div style="display: block;width: 51px;clear: both;"></div></th>
+                <th>Data Source </th>
+                <th>Priority<div style="display: block;width: 5px;clear: both;"></div></th>
+                <th>Data Item </th>
+                <th>Short Desc<div style="display: block;width: 40px;clear: both;"></div></th>
+                <th>GMC</th>
+                <th>LSID</th>
+                <th>Area</th>
+                <th>Description<div style="display: block;width: 250px;clear: both;"></div></th>
+                <th>Family Id</th>
+                <th>Query Date<div style="display: block;width: 40px;clear: both;"></div></th>
+                <th>Weeks Open</th>
+                <th>Resolution Date</th>
+                <th>Escalation</th>
+                <th>Notes<div style="display: block;width: 350px;clear: both;"></div></th>
             </tr>
         </thead>
     </table>
 
-
     <form name="exportIssuesForm" id="exportIssuesForm" method='get' action="/export">
         <input type="hidden" id="length" name="length" value="1" />
 
-        <button type='submit' id="export" class="btn btn-default btn-success pull-left submitButton">Export filtered</button>
+        <button type='submit' id="export" class="btn btn-primary pull-left dqmsButton">Export filtered</button>
     </form>
 
-    <button type="submit" id="submitButton" class="btn btn-default btn-success pull-right submitButton">Send</button>
+
+    &nbsp;
+    <button type="submit" id="sendButton" class="btn btn-primary dqmsButton">Send</button>
+
+    &nbsp;
+    <button type="submit" id="statusButton" class="btn btn-primary dqmsButton">Status Change</button>
+
+    &nbsp;
+    &nbsp;
+    <button type="submit" id="reportButton" class="btn btn-primary dqmsButton">Report</button>
+
+    <div class="pull-right">
+        <button type="submit" id="addButton" class="btn btn-primary dqmsButton">Add</button>
+        &nbsp;
+
+        <span class="btn btn-primary btn-file dqmsButton">
+            Import&hellip; <input type="file" id="importFile" accept=".csv">
+        </span>
+    </div>
+
 
 }
+

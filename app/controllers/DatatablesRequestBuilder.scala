@@ -3,30 +3,32 @@ package controllers
 import java.util.Date
 
 import controllers.UiUtils._
+import dao.SearchCriteria
 import dao.Searching.SearchRequest
-import domain.{Draft, SearchCriteria}
+import domain.{Draft, Status}
 import org.joda.time.LocalDate
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import org.slf4j.{Logger, LoggerFactory}
-import play.api.mvc.{AnyContent, Request}
+
+import scala.util.{Failure, Success, Try}
 
 /**
-  * This builder is specifically to service the requirements of the UI Datatables.js component
+  * This builder services the requirements of the UI Datatables.js component
   */
 object DatatablesRequestBuilder {
 
   val log: Logger = LoggerFactory.getLogger(this.getClass())
 
   //needs to be kept in sync with ui
-  private val uiColumnNames: List[String] = List("select/checkbox", "status", "DT_RowId", "loggedBy", "dateLogged", "issueOrigin", "GMC", "description", "patientId")
+  private val uiColumnNames: List[String] = List("select/checkbox", "DT_RowId", "status", "dateLogged", "participantId", "dataSource", "priority", "dataItem", "shortDesc", "gmc", "lsid", "area", "description", "familyId", "queryDate", "weeksOpen", "resolutionDate", "escalation", "notes")
 
   //support both get & post by taking the param map
   def build(request: Map[String, Seq[String]]): SearchRequest = {
     //for security coerce these to int and provide safe fallbacks
-    val draw = param(request,"draw").getOrElse("1").toInt
-    val offset = param(request,"start").getOrElse("0").toInt
-    val pageSize = param(request,"length").getOrElse("10").toInt
+    val draw = param(request, "draw").getOrElse("1").toInt
+    val offset = param(request, "start").getOrElse("0").toInt
+    val pageSize = param(request, "length").getOrElse("10").toInt
 
-    println(s"pageSize=$pageSize")
     val filter = param(request, "filter")
     val search = param(request, "search[value]")
     var isNew = false
@@ -51,40 +53,93 @@ object DatatablesRequestBuilder {
     }
 
     var gmc = param(request, "gmc")
-    var dateLogged: Option[Date] = None
-    var patientId: Option[String] = None
-    var issueStatus: Option[domain.Status] = None
+    var participantId: Option[Int] = None
+    var issueStatus = Status.statusFrom(param(request, "status"))
+    var dataSource = param(request, "origin")
+    var area = param(request, "area")
+
+
+    var dateLoggedStart = parseDateToOptionDate(param(request, "startDate"))
+    var dateLoggedEnd = parseDateToOptionDate(param(request, "endDate"))
+
+    println("startDate=" + param(request, "startDate") + " dateLoggedStart=" + dateLoggedStart)
+    println("endDate=" + param(request, "endDate") + " dateLoggedEnd=" + dateLoggedEnd)
+
+    var maybePriority: Option[Int] = param(request, "priority") match {
+      case Some(p) if p.length > 0 => Some(p.toInt)
+      case None => None
+    }
+
 
     if (isNew) {
-      patientId = None
+      participantId = None
       gmc = None
+      dataSource = None
+      maybePriority = None
+      area = None
       issueStatus = Some(Draft)
-      val days = param(request, "days").getOrElse("0").toInt
-      dateLogged = Some(LocalDate.now().minusDays(days).toDate)
     }
 
     //search is higher precedence than filters
     if (isSearch) {
-      patientId = Some(search.get)
+      participantId = Some(search.get.toInt)
       gmc = None
-      dateLogged = None
+      maybePriority = None
+      area = None
+      dateLoggedStart = None
+      dateLoggedEnd = None
       issueStatus = None
+      dataSource = None
     }
 
     val sortCol = param(request, "order[0][column]")
     val sortDir = param(request, "order[0][dir]")
 
     //default to sort by dateLogged/desc
-    val sortColFromUI = uiColumnNames(sortCol.getOrElse("4").toInt)
+    val sortColFromUI = uiColumnNames(sortCol.getOrElse("3").toInt)
     val sortOrderFromUI = sortDir.getOrElse("desc")
     log.info(s"sortCol=$sortCol sortDir=$sortDir sortColFromUI=$sortColFromUI sortOrderFromUI=$sortOrderFromUI")
 
-    val sortCriteria : Option[(String, String)] = Some((sortColFromUI,sortOrderFromUI))
-    val searchCriteria = SearchCriteria(gmc, issueStatus = issueStatus, dateLogged = dateLogged, patientId = patientId)
+    val sortCriteria: Option[(String, String)] = Some((sortColFromUI, sortOrderFromUI))
+    val searchCriteria = SearchCriteria(gmc, issueStatus = issueStatus, dataSource = dataSource, dateLoggedStart = dateLoggedStart, dateLoggedEnd = dateLoggedEnd, priority = maybePriority, area = area, participantId = participantId)
 
     val searchRequest: SearchRequest = SearchRequest(offset, pageSize, searchCriteria, draw, sortCriteria)
     log.info(s"searchRequest: $searchRequest")
     searchRequest
+  }
+
+
+  //may not be needed now using Dates
+  def parseDaysToOptionDate(possibleDays: Option[String]): Option[Date] = {
+    //adds custom unapply to Int for String pattern match
+    object Int {
+      def unapply(s: String): Option[Int] = util.Try(s.toInt).toOption
+    }
+
+    possibleDays match {
+      case Some(days) => days match {
+        case Int(i) => Some(LocalDate.now().minusDays(i).toDate)
+        case _ => None //ignore non int strings
+      }
+      case None => None
+    }
+
+  }
+
+
+  def parseDateToOptionDate(tryStringAsDate: Option[String]): Option[Date] = {
+    val dateTimeFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy")
+
+    val tryDate: Try[Date] = Try(LocalDate.parse(tryStringAsDate.getOrElse(""), dateTimeFormat).toDate)
+
+    val maybeDate: Option[Date] = tryDate match {
+      case Success(date) => Some(date)
+      case Failure(e) => None
+    }
+
+    println("got " + maybeDate)
+    maybeDate
+
   }
 
 }

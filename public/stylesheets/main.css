@@ -50,7 +50,7 @@ header {
 }
 
 footer {
-    background-color: #4C4;
+    background-color: #7BB87B;
     min-height: 30px;
     width: 100%;
 }
@@ -63,10 +63,19 @@ footer {
     background-color: #a9c2d8;
 }
 
-.gmcs {
+.dqmsSelect {
     color: #337ab7;
 }
 
+/*querychain marker*/
+.qchain {}
+
+.qchain-dq {
+    background-color: #F8DFCE;
+}
+.qchain-gmc {
+    background-color: #D7E6F3;
+}
 /* this isn't doing it's job to centre the text - fix or remove RR*/
 .appName {
     width: 100%;
@@ -82,24 +91,67 @@ footer {
     /*line-height: 2;*/
 }
 
-.submitButton{
+.dqmsButton{
     background-color: #337ab7;
     font-size: 12px;
 }
+
+/*failureTable pallete deep-red-> color: #a94442;*/
+.table-failure-striped > tbody > tr:nth-of-type(2n+1) {
+    background-color: #f2dede;
+}
+
+.thead-failure-default {
+    background-color: #ebccd1;
+}
+
+.ok-default {
+    background-color: #C0DAB5;
+}
+.archived-default {
+    background-color: #747474;
+}
+.responded-default {
+    background-color: #EBC06D;
+}
+.resolved-default {
+    background-color: #C0DAB5;
+}
+.failure-default {
+    background-color: #ebccd1;
+}
+
+.bootstrap-dialog.type-success .modal-header {
+    background-color: #7BB87B;
+    text-decoration-color: #000000;
+}
+
 .cursorPointer {
     cursor: pointer;
 }
 
-.remove-button {
-    color: #c50909;
-    padding-left: 27px;
+.btn-file {
+    position: relative;
+    overflow: hidden;
+}
+.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: white;
+    cursor: inherit;
+    display: block;
 }
 
-.edit-button {
-    color: #035C04;
-    padding-left: 27px;
+.error{
+    color: #b62727;
 }
-
 .noneDisplay {
     display: none;
 }

@@ -1,7 +1,7 @@
 @import domain._
 @import org.pac4j.core.profile.CommonProfile
 
-@(issueList: Seq[LoggedIssue], profiles: List[CommonProfile])
+@(issueList: Seq[Issue], profiles: List[CommonProfile])
 @*
 * Call the `main` with arguments. The first
 * argument is a `String` with the title of the page, the second
@@ -23,7 +23,6 @@ JUST A SIMPLE VIEW AS PART OF WORKFLOW DEFINITION
                 <tr>
                     <th > Status </th>
                     <th > Issue Id </th>
-                    <th > Logged By </th>
                     <th > Date Logged </th>
                     <th > Issue Origin </th>
                     <th > GMC </th>
@@ -36,10 +35,9 @@ JUST A SIMPLE VIEW AS PART OF WORKFLOW DEFINITION
                 <tr>
                     <td>@issue.status</td>
                     <td>@issue.issueId</td>
-                    <td>@issue.loggedBy</td>
                     <td>@issue.dateLogged</td>
-                    <td>@issue.issueOrigin</td>
-                    <td>@issue.GMC</td>
+                    <td>@issue.dataSource</td>
+                    <td>@issue.gmc</td>
                     <td>@issue.description</td>
                     <td>@issue.familyId</td>
                 </tr>
