@@ -1,9 +1,9 @@
 <div class="modal fade" id="addModal" tabindex="-1">
     <div class="modal-dialog .modal-sm">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header" id="addModalHeader">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h5 class="modal-title">New Issue Details</h5>
+                <h5 class="modal-title" id="addModalTitle">New Issue Details</h5>
             </div>
             <div class="modal-body">
                 <form id="addForm" role="form">
@@ -72,6 +72,7 @@
                                 <label for="addGMC">GMC</label>
                                 <select id="addGMC" class="form-control input-sm" required>
                                     <option value="">select</option>
+                                    <option value="GEL">GEL</option>
                                     <option value="NI1">NI1</option>
                                     <option value="RA7">RA7</option>
                                     <option value="REP">REP</option>

@@ -57,31 +57,6 @@ function loadIssues() {
     });
 }
 
-function getDateTime() {
-    var date = new Date(),
-        year = date.getFullYear(),
-        month = (date.getMonth() + 1).toString(),
-        formatedMonth = (month.length === 1) ? ("0" + month) : month,
-        day = date.getDate().toString(),
-        formatedDay = (day.length === 1) ? ("0" + day) : day,
-        hour = date.getHours().toString(),
-        formatedHour = (hour.length === 1) ? ("0" + hour) : hour,
-        minute = date.getMinutes().toString(),
-        formatedMinute = (minute.length === 1) ? ("0" + minute) : minute,
-        second = date.getSeconds().toString(),
-        formatedSecond = (second.length === 1) ? ("0" + second) : second;
-    return formatedDay + "/" + formatedMonth + "/" + year + " " + formatedHour + ':' + formatedMinute + ':' + formatedSecond;
-};
-//could make this more generic e.g make dt optional
-function getDate(dt) {
-    var date = dt,
-        year = date.getFullYear(),
-        month = (date.getMonth() + 1).toString(),
-        formatedMonth = (month.length === 1) ? ("0" + month) : month,
-        day = date.getDate().toString(),
-        formatedDay = (day.length === 1) ? ("0" + day) : day;
-    return formatedDay + "/" + formatedMonth + "/" + year;
-};
 
 function displayQChain(el) {
     var issueId = tableIssues.row(el).data().DT_RowId;
@@ -540,7 +515,7 @@ function reportDisplay(name) {
 
 
 function saveIssue() {
-    return;
+    var currentFilter = tableIssues.ajax.url();
     var formData = new FormData($('#addForm')[0]); //auto serialize
     formData.append("gmc", $("#addGMC").val());
 
@@ -557,6 +532,7 @@ function saveIssue() {
                     size: BootstrapDialog.SIZE_SMALL,
                     type: BootstrapDialog.TYPE_SUCCESS
                 });
+                tableIssues.ajax.url(currentFilter).load();
             } else {
                 BootstrapDialog.show({
                     title: 'Save Failed',
@@ -573,7 +549,42 @@ function saveIssue() {
     });
 }
 
-function bindAddFormValidation() {
+function updateIssue() {
+    var currentFilter = tableIssues.ajax.url();
+    var formData = new FormData($('#addForm')[0]); //auto serialize
+    formData.append("gmc", $("#addGMC").val());
+
+    $.ajax({
+        url: '/dqms/update',
+        data: formData,
+        type: 'POST',
+        contentType: false,
+        processData: false,
+        success: function (data) {
+            if (data == "Update ok") {
+                BootstrapDialog.show({
+                    title: 'Update Successful',
+                    size: BootstrapDialog.SIZE_SMALL,
+                    type: BootstrapDialog.TYPE_SUCCESS
+                });
+                tableIssues.ajax.url(currentFilter).load();
+            } else {
+                BootstrapDialog.show({
+                    title: 'Update Failed',
+                    message: data,
+                    size: BootstrapDialog.SIZE_SMALL,
+                    type: BootstrapDialog.TYPE_DANGER
+                });
+            }
+
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert("An unexpected error occurred, please see server logs:" + textStatus + ': ' + errorThrown);
+        }
+    });
+}
+
+function bindAddFormValidation(isEdit) {
     var validator = $('#addForm').validate(
         {
             rules: {
@@ -634,7 +645,11 @@ function bindAddFormValidation() {
                     .closest('.control-group').addClass('valid').removeClass('error');
             },
             submitHandler: function () {
-                saveIssue();            //validator is bound to save button & kicks off saveIssue if validation passes
+                if (isEdit) {
+                    updateIssue();            //validator is bound to save button & kicks off saveIssue if validation passes
+                } else {
+                    saveIssue();            //validator is bound to save button & kicks off saveIssue if validation passes
+                }
             }
         });
 
@@ -657,13 +672,14 @@ function bindAddFormValidation() {
     return validator;
 }
 
-function bindAddForm() {
-    var addFormValidr = bindAddFormValidation();
+function bindAddForm(isEdit) {
+    var addFormValidr = bindAddFormValidation(isEdit);
     addFormValidr.resetForm();
-
     $("#addForm")[0].reset();
+
+    var anySelectedRows = tableIssues.rows({selected: true}).count() > 0;
     //auto-populate from first selection
-    if (tableIssues.rows({selected: true}).count() > 0) {
+    if (anySelectedRows) {
         var found = false;
         tableIssues.rows({selected: true}).data().each(function (rowData) {
             if (!found) {
@@ -672,6 +688,21 @@ function bindAddForm() {
                 $("#addShortDesc").val(rowData.shortDesc);
                 $("#addDescription").val(rowData.description);
                 $("#addNotes").val(rowData.notes);
+                //copy all fields and make readOnly
+                if(isEdit) {
+                    $("#addIssueId").val(rowData.DT_RowId);
+                    $("#addStatus").val(rowData.status);
+
+                    var d =  moment(rowData.dateLogged,"DD-MMM-YYYY HH:mm:ss");
+                    $("#addDateLogged").val(moment(d).format("DD/MM/YYYY HH:mm:ss")); //re-format to pass valdn
+
+                    $("#addGMC").val(rowData.gmc);
+                    $("#addParticipant").val(rowData.participantId);
+                    $("#addPriority").val(rowData.priority);
+                    $("#addLSID").val(rowData.lsid);
+                    $("#addArea").val(rowData.area);
+                    $("#addFamilyId").val(rowData.familyId);
+                }
                 found = true;
             }
         });
@@ -694,7 +725,7 @@ function bindAddForm() {
             success: function (data) {
                 issueId = data;
                 $("#addIssueId").val(issueId);
-                $("#addDateLogged").val(getDateTime());
+                $("#addDateLogged").val(moment().format("DD/MM/YYYY HH:mm:ss"));
                 addFormValidr.form();
             },
             error: function (jqXHR, textStatus, errorThrown) {
@@ -702,6 +733,48 @@ function bindAddForm() {
             }
         });
     });
+
+    //only display edit if row selected
+    if (isEdit && anySelectedRows) {
+        $("#addModalTitle").text('Edit Issue Details');
+        $("#addModalHeader").removeClass("ok-default");
+        $("#addModalHeader").addClass("responded-default");
+
+        // set the readOnlys
+        $("#addGMC").prop('disabled', true);
+        $("#addDataSource").prop('readonly', true);
+        $("#addDataItem").prop('readonly', true);
+        $("#addShortDesc").prop('readonly', true);
+        $("#addDescription").prop('readonly', true);
+        $("#addParticipant").prop('readonly', true);
+        $("#addPriority").prop('readonly', true);
+        $("#addLSID").prop('readonly', true);
+        $("#addArea").prop('readonly', true);
+        $("#addFamilyId").prop('readonly', true);
+
+        $("#addModal").modal({backdrop: 'static'});
+        $("#addModal").modal('show');
+    }
+    if (!isEdit) {  //it's 'add' then
+        $("#addModalTitle").text('New Issue Details');
+        $("#addModalHeader").removeClass("responded-default");
+        $("#addModalHeader").addClass("ok-default");
+
+        // reset the readOnlys
+        $("#addGMC").prop('disabled', false);
+        $("#addDataSource").prop('readonly', false);
+        $("#addDataItem").prop('readonly', false);
+        $("#addShortDesc").prop('readonly', false);
+        $("#addDescription").prop('readonly', false);
+        $("#addParticipant").prop('readonly', false);
+        $("#addPriority").prop('readonly', false);
+        $("#addLSID").prop('readonly', false);
+        $("#addArea").prop('readonly', false);
+        $("#addFamilyId").prop('readonly', false);
+
+        $("#addModal").modal({backdrop: 'static'});
+        $("#addModal").modal('show');
+    }
 }
 
 //import event setup
@@ -749,9 +822,7 @@ $(document).ready(function () {
     $("#newIssues").click(function (e) {
         resetInputs();
         $('#statusSelect').val('Open');
-        var dt = new Date();
-        dt.setDate(dt.getDate()-7);
-        $('#startDate').datepicker('update', getDate(dt));
+        $('#startDate').datepicker('update', moment().subtract(7, 'days').format("DD/MM/YYYY"));
 
         //var url = "/list?filter=new&days=30";   //should be last 30days by default
         var url = "/dqms/list?" + buildFilter();
@@ -769,9 +840,11 @@ $(document).ready(function () {
     });
 
     $("#addButton").click(function (e) {
-        bindAddForm();
-        $("#addModal").modal({backdrop: 'static'});
-        $("#addModal").modal('show');
+        bindAddForm(false);
+    });
+
+    $("#editButton").click(function (e) {
+        bindAddForm(true);
     });
 
     $("#sendButton").click(function (e) {

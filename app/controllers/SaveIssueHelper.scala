@@ -30,6 +30,20 @@ class SaveIssueHelper @Inject()(issueTrackingService: IssueTrackingService, vali
     }
   }
 
+  def validateAndUpdate(request: Map[String, Seq[String]]): String = {
+
+    //note if fuller edit capabilities are built it needs to be done this way...
+    val issue = createIssue(request)  //currently retrieves most (but not all e.g. dates) the issue fields from the submission
+
+    val (pass, error) = validate(issue)
+    if (pass) {
+      update(issue)
+    } else {
+      log.error(error)
+      error
+    }
+  }
+
 
   def createIssue(request: Map[String, Seq[String]]): Issue = {
     //gather params
@@ -78,6 +92,17 @@ class SaveIssueHelper @Inject()(issueTrackingService: IssueTrackingService, vali
     } else {
       log.error(s"Saving issue failed ${error}")
       s"Save failed, ${error}"
+    }
+  }
+
+  def update(newIssue: Issue): String = {
+    val (pass, error) = issueTrackingService.update(newIssue)
+
+    if (pass) {
+      "Update ok"
+    } else {
+      log.error(s"Updating issue failed ${error}")
+      s"Update failed, ${error}"
     }
   }
 

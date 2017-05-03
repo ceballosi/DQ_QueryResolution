@@ -67,6 +67,11 @@ footer {
     color: #337ab7;
 }
 
+.logout {
+    background-color: #a9c2d8;
+    color: white;
+}
+
 /*querychain marker*/
 .qchain {}
 

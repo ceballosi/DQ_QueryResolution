@@ -187,10 +187,32 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     db.run(query.result)
   }
 
-  def update(issue: Issue): Future[Int] = {
-    db.run(
-      loggedIssues.filter( _.issueId === issue.issueId) update (issue)
-    )
+  //we don't want generic update issue method, we want to control precisely which fields we update
+  //only Notes field to start
+  def update(issue: Issue): (Boolean, String) = {
+    val updateQuery = loggedIssues.filter( _.issueId === issue.issueId).map(iss => (iss.notes)) update (issue.notes)
+
+    val futureResult: Try[Int] = Await.ready(db.run(updateQuery), 30 seconds).value.get
+
+    val result = futureResult match {
+      case scala.util.Success(numRows) => {
+        if (numRows > 0) (true,"")           // relies on numRows changed to determine success/fail
+        else {
+          val msg: String = s"update issue db failed"
+          log.error(msg)
+          (false, msg)
+        }
+      }
+      case scala.util.Failure(e) => {
+        val msg = s"issue ${issue.issueId} update issue error " + e.toString
+        val sw = new StringWriter
+        e.printStackTrace(new PrintWriter(sw))
+        log.error(sw.toString)
+        (false, msg)
+      }
+    }
+
+    result
   }
 
   def updateQueryDate(newDate: Date, issue: Issue): Future[Int] = {
@@ -224,13 +246,13 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
       case scala.util.Success(numRows) => {
         if (numRows > 0) (true,"")
         else {
-          val msg: String = s"insert db failed"
+          val msg = s"insert db failed"
           log.error(msg)
           (false, msg)
         }
       }
       case scala.util.Failure(ex) => {
-        val msg: String = s"insert db error ex=" + ex.toString
+        val msg = s"insert db error ex=" + ex.toString
         log.error(msg)
         val sw = new StringWriter
         ex.printStackTrace(new PrintWriter(sw))

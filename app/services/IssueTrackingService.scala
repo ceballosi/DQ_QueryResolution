@@ -28,7 +28,9 @@ trait IssueTrackingService {
   def importFile(file: File): List[(Int, Throwable)]
   def changeStatus(newStatus: Status, issueIds: List[String]): Future[List[(String, Throwable)]]
   def save(issue: Issue): (Boolean, String)
-    //TODO : To be removed (temporary method to create a table and populate data)
+  def update(issue: Issue): (Boolean, String)
+
+  //TODO : To be removed (temporary method to create a table and populate data)
   def tmpMethod: Future[Unit]
 
   def allQc: Future[Seq[QueryChain]]
@@ -163,9 +165,6 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
     Future(failures.toList)
   }
 
-  def save(issue: Issue): (Boolean, String) = {
-   issueTrackingDao.insert(issue)
-  }
 
   def findIssuesInOrder(issueIds: List[String]): List[Issue] = {
     val orderedIssues = ListBuffer[Issue]()
@@ -190,6 +189,9 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
     orderedIssues.toList
   }
 
+  def save(issue: Issue): (Boolean, String) = issueTrackingDao.insert(issue)
+
+  def update(issue: Issue): (Boolean, String) = issueTrackingDao.update(issue)
 
   def updateDatesOnly(newStatus: Status, issue: Issue) = {
     newStatus match {
@@ -220,7 +222,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
 
     val r = new Random
     val statuses = Status.validStatuses
-    val gmcList = List("RRK", "RGT", "RJ1", "RW3", "RTD", "RP4", "REP", "RTH", "RHM", "RH8", "RYJ", "RA7", "RHQ", "NI1")
+    val gmcList = List("GEL","RRK", "RGT", "RJ1", "RW3", "RTD", "RP4", "REP", "RTH", "RHM", "RH8", "RYJ", "RA7", "RHQ", "NI1")
     val priorityList = List(2,2,2,2,2,2,2,2,2,1) //fasttrack is 1 in 10
     val dataSourceList = List("ServiceDesk", "DataQuality", "RedTeam", "Informatics", "BioInformatics")
     val dataItemList = List("Gender", "FamilyId", "DOB", "Excision Margin", "Biological Relationship to Proband")

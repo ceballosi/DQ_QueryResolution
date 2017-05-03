@@ -7,7 +7,7 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 scalaVersion := "2.11.7"
 
 resolvers += Resolver.sonatypeRepo("releases")
-resolvers += Resolver.sonatypeRepo("snapshots")
+//resolvers += Resolver.sonatypeRepo("snapshots")
 
 libraryDependencies ++= Seq(
   ws,
@@ -23,11 +23,11 @@ libraryDependencies ++= Seq(
   "com.github.melrief" %% "purecsv" % "0.0.9",
   "com.wix" %% "accord-core" % "0.6.1",
   "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test,
-  "org.pac4j" % "play-pac4j" % "3.0.0-RC2-SNAPSHOT",
-  "org.pac4j" % "pac4j-ldap" % "2.0.0-RC2-SNAPSHOT",
-  "org.pac4j" % "pac4j-http" % "2.0.0-RC2-SNAPSHOT"
+  "org.pac4j" % "play-pac4j" % "3.0.0-RC2",
+  "org.pac4j" % "pac4j-ldap" % "2.0.0-RC2",
+  "org.pac4j" % "pac4j-http" % "2.0.0-RC2"
 )
 
-
+//skip in update := true
 
 fork in run := true

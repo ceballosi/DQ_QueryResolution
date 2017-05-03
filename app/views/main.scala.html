@@ -33,15 +33,16 @@
 
         <link rel="stylesheet" media="screen" href="@routes.Assets.versioned("stylesheets/main.css")">
         <link rel="shortcut icon" type="image/png" href="@routes.Assets.versioned("images/favicon.png")">
+        <script src="@routes.Assets.versioned("javascripts/moment.min.js")" type="text/javascript"></script>
         <script src="@routes.Assets.versioned("javascripts/jquery.validate.js")" type="text/javascript"></script>
         <script src="@routes.Assets.versioned("javascripts/dqms.js")" type="text/javascript"></script>
 
+        <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
     </head>
     <body>
         <header>
-            <h3 style="text-align: center" class="appName"> </h3>
-            <h3 style="text-align: center" class="appName">Data Quality Issues</h3>
-            <p> </p>
+            <h3 class="appName">Data Quality Issues</h3>
+            <button type="submit" id="logoutButton" class="btn pull-right logout" onclick="location.href='@baseUrl/logout';">Logout <i class="fa fa-sign-out"></i></button>
         </header>
         <div class="container-fluid body-content">
             <nav id="nav" style="margin-left: 5px ;">
@@ -89,8 +90,6 @@
                         <input type="text" class="input-sm form-control dqmsSelect datepicker" style="width: 85px;font-size: 11px;" name="endDate" id="endDate" data-provide="datepicker"/>
                     </div>
                 </div>
-                <a href="@baseUrl/logout">Logout</a>
-
             </nav>
             <section id="main">
                 @content

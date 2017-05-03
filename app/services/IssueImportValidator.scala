@@ -73,7 +73,7 @@ class IssueImportValidator @Inject()(issueTrackingDao: IssueTrackingDao)(implici
     issue.dataItem as "invalid dataItem" is notEmpty
     issue.shortDesc as "invalid shortDesc" is notEmpty
     issue.description as "invalid description" is notEmpty
-    issue.gmc.toUpperCase as "invalid gmc" is oneOf("RRK", "RGT", "RJ1", "RW3", "RTD", "RP4", "REP", "RTH", "RHM", "RH8", "RYJ", "RA7", "RHQ", "NI1")
+    issue.gmc.toUpperCase as "invalid gmc" is oneOf("GEL", "RRK", "RGT", "RJ1", "RW3", "RTD", "RP4", "REP", "RTH", "RHM", "RH8", "RYJ", "RA7", "RHQ", "NI1")
     issue.area as "invalid therapeutic area" is oneOf("Cancer", "RD")
   }
   //End Accord validator

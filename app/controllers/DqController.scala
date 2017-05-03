@@ -10,7 +10,7 @@ import org.pac4j.core.config.Config
 import org.pac4j.core.profile.{ProfileManager, CommonProfile}
 import org.pac4j.play.PlayWebContext
 import org.pac4j.play.scala.Security
-import org.pac4j.play.store.PlaySessionStore
+import org.pac4j.play.store.{PlayCacheSessionStore, PlaySessionStore}
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.Configuration
 import play.api.libs.Files.TemporaryFile
@@ -37,8 +37,18 @@ class DqController @Inject()(val config: Config, val playSessionStore: PlaySessi
   //pac4j profile
   def getProfiles(implicit request: RequestHeader): List[CommonProfile] = {
     val webContext = new PlayWebContext(request, playSessionStore)
+    val sessionStore: PlayCacheSessionStore = playSessionStore.asInstanceOf[PlayCacheSessionStore]
+    sessionStore.setTimeout(20)
+
     val profileManager = new ProfileManager[CommonProfile](webContext)
     val profiles = profileManager.getAll(true)
+
+    println("got1=" + profiles.get(0).getEmail)
+    println("got2=" + profiles.get(0).getFirstName)
+    println("got3=" + profiles.get(0).getFamilyName)
+    println("got4=" + profiles.get(0).getDisplayName)
+    println("got5=" + profiles.get(0).getUsername)
+
     JavaConversions.asScalaBuffer(profiles).toList
   }
 
@@ -281,5 +291,9 @@ class DqController @Inject()(val config: Config, val playSessionStore: PlaySessi
 
   def save = Action(parse.multipartFormData) { implicit req =>
     Ok(saveIssueHelper.validateAndSave(req.body.dataParts).toString)
+  }
+
+  def update = Action(parse.multipartFormData) { implicit req =>
+    Ok(saveIssueHelper.validateAndUpdate(req.body.dataParts).toString)
   }
 }
