@@ -3,13 +3,11 @@ package auth
 import com.google.inject.AbstractModule
 import org.pac4j.core.client.Clients
 import org.pac4j.core.config.Config
-import org.pac4j.core.context.WebContext
-import org.pac4j.core.context.session.SessionStore
 import org.pac4j.http.client.indirect.FormClient
 import org.pac4j.ldap.profile.service.LdapProfileService
-import org.pac4j.play.{CallbackController, LogoutController}
 import org.pac4j.play.http.DefaultHttpActionAdapter
-import org.pac4j.play.store.{PlayCacheStore, PlayCacheSessionStore, PlaySessionStore}
+import org.pac4j.play.store.{PlayCacheSessionStore, PlaySessionStore}
+import org.pac4j.play.{CallbackController, LogoutController}
 import play.api.{Configuration, Environment}
 
 /**
@@ -23,7 +21,7 @@ class SecurityModule(environment: Environment, configuration: Configuration) ext
 
     val authenticator = new LdapProfileService(LdapClient.pooledConnectionFactory,
       LdapClient.ldaptiveAuthenticator, "", "ou=int,ou=people,dc=ge,dc=co,dc=uk")
-//    val authenticator = new LdapProfileService()
+//    val authenticator = new LdapProfileService()   - no ldap version
 
     authenticator.setUsernameAttribute("uid")
     val formClient = new FormClient(s"$baseUrl/login", authenticator)
@@ -39,10 +37,6 @@ class SecurityModule(environment: Environment, configuration: Configuration) ext
     callbackController.setDefaultUrl(s"$baseUrl/container")
     callbackController.setMultiProfile(true)
     bind(classOf[CallbackController]).toInstance(callbackController)
-
-//    val store: SessionStore[_ <: WebContext] = callbackController.getConfig.getSessionStore
-//    store.asInstanceOf[PlayCacheSessionStore].setTimeout(20)
-//classOf[PlaySessionStore].asInstanceOf[PlayCacheSessionStore].getTimeout
 
     val logoutController = new LogoutController()
     logoutController.setDefaultUrl(s"$baseUrl/login")

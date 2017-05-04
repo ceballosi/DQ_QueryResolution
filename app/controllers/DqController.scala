@@ -26,7 +26,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 @Singleton
-class DqController @Inject()(val config: Config, val playSessionStore: PlaySessionStore, override val ec: HttpExecutionContext,
+class DqController @Inject()(override val config: Config, override val playSessionStore: PlaySessionStore, override val ec: HttpExecutionContext,
                             issueTracking: IssueTrackingService, saveIssueHelper: SaveIssueHelper, mailService: MailService,
                              configuration: Configuration)
                             (implicit executionContext: ExecutionContext) extends Controller with Security[CommonProfile] {
@@ -38,16 +38,17 @@ class DqController @Inject()(val config: Config, val playSessionStore: PlaySessi
   def getProfiles(implicit request: RequestHeader): List[CommonProfile] = {
     val webContext = new PlayWebContext(request, playSessionStore)
     val sessionStore: PlayCacheSessionStore = playSessionStore.asInstanceOf[PlayCacheSessionStore]
-    sessionStore.setTimeout(20)
+//    sessionStore.setTimeout(10)
 
+//    config.getSessionStore.asInstanceOf[PlayCacheSessionStore].setTimeout(12)
     val profileManager = new ProfileManager[CommonProfile](webContext)
     val profiles = profileManager.getAll(true)
 
-    println("got1=" + profiles.get(0).getEmail)
-    println("got2=" + profiles.get(0).getFirstName)
-    println("got3=" + profiles.get(0).getFamilyName)
-    println("got4=" + profiles.get(0).getDisplayName)
-    println("got5=" + profiles.get(0).getUsername)
+//    println("got1=" + profiles.get(0).getEmail)
+//    println("got2=" + profiles.get(0).getFirstName)
+//    println("got3=" + profiles.get(0).getFamilyName)
+//    println("got4=" + profiles.get(0).getDisplayName)
+//    println("got5=" + profiles.get(0).getUsername)
 
     JavaConversions.asScalaBuffer(profiles).toList
   }
@@ -71,6 +72,7 @@ class DqController @Inject()(val config: Config, val playSessionStore: PlaySessi
 
   def listAjaxAsync = Action.async(parse.tolerantFormUrlEncoded) { implicit req =>
 
+//    getProfiles(req)
     val searchRequest: SearchRequest = DatatablesRequestBuilder.build(req.body ++ req.queryString)
 
     val findResult: Future[SearchResult[IssueView]] = issueTracking.findBySearchRequest(searchRequest)
@@ -241,6 +243,13 @@ class DqController @Inject()(val config: Config, val playSessionStore: PlaySessi
 
     Ok(reportsToJson(null))
   }
+
+//  def reports = Action { implicit req =>
+//    ReportCalculator
+//
+//
+//    Ok(reportsToJson(stats))
+//  }
 
 
   def queryChain = Action.async(parse.multipartFormData) { implicit req =>
