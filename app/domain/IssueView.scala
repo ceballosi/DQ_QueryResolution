@@ -20,7 +20,7 @@ case class IssueView(//19 fields (out of possible 22!)
                  area: String,
                  description: String,
                  familyId: Option[String],
-                 queryDate: Option[Date],
+                 openDate: Option[Date],
                  weeksOpen: Option[Int],
                  resolutionDate: Option[Date],
                  escalation: Option[Date],
@@ -31,12 +31,13 @@ case class IssueView(//19 fields (out of possible 22!)
     val dateLoggedStr = IssueView.dateToIsoStr(dateLogged)
     val lsidStr = lsid.getOrElse("")
     val family = familyId.getOrElse("")
-    val querySent = IssueView.dateToIsoStr(queryDate)
+    val querySent = IssueView.dateToIsoStr(openDate)
     val weeks = weeksOpen.getOrElse("")
     val resolvedDt = IssueView.dateToIsoStr(resolutionDate)
     val escalateDt = IssueView.dateToIsoStr(escalation)
+    val noteStr = notes.getOrElse("")
 
-    s"$issueId,$status,$dateLoggedStr,$participantId,$dataSource,$priority,$dataItem,$shortDesc,$gmc,$lsidStr,$area,$description,$family,$querySent,$weeks,$resolvedDt,$escalateDt,$notes"
+    s"$issueId,$status,$dateLoggedStr,$participantId,$dataSource,$priority,$dataItem,$shortDesc,$gmc,$lsidStr,$area,$description,$family,$querySent,$weeks,$resolvedDt,$escalateDt,$noteStr"
   }
 }
 
@@ -59,7 +60,7 @@ object IssueView {
         "area" -> Json.toJson(c.area),
         "description" -> Json.toJson(c.description),
         "familyId" -> Json.toJson(c.familyId),
-        "queryDate" -> dateToStr(c.queryDate),
+        "openDate" -> dateToStr(c.openDate),
         "weeksOpen" -> Json.toJson(c.weeksOpen),
         "resolutionDate" -> dateToStr(c.resolutionDate),
         "escalation" -> dateToStr(c.escalation),

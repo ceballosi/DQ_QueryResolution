@@ -65,8 +65,8 @@ class SaveIssueHelper @Inject()(issueTrackingService: IssueTrackingService, vali
     val familyId = param(request, "familyId")
     val notes = param(request, "notes")
 
-    val newIssue = new Issue(0, issueId, status, dateLogged, participantId, dataSource, priority, dataItem, shortDesc, gmc, lsid, area,
-      description, familyId, queryDate = None, weeksOpen = None, resolutionDate = None, escalation = None, notes)
+    val newIssue = new Issue(0, issueId, status, dateLogged, participantId, dataSource, priority, dataItem, shortDesc,
+      gmc, lsid, area, description, familyId, notes)
 
     log.debug("newIssue=" + newIssue)
     newIssue

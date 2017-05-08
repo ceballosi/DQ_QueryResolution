@@ -28,7 +28,7 @@ function loadIssues() {
             {"data": "area"},
             {"data": "description"},
             {"data": "familyId"},
-            {"data": "queryDate"},
+            {"data": "openDate"},
             {"data": "weeksOpen"},
             {"data": "resolutionDate"},
             {"data": "escalation"},

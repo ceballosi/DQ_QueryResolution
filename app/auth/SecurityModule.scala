@@ -21,7 +21,7 @@ class SecurityModule(environment: Environment, configuration: Configuration) ext
 
     val authenticator = new LdapProfileService(LdapClient.pooledConnectionFactory,
       LdapClient.ldaptiveAuthenticator, "", "ou=int,ou=people,dc=ge,dc=co,dc=uk")
-//    val authenticator = new LdapProfileService()   - no ldap version
+//    val authenticator = new LdapProfileService()    // no ldap version
 
     authenticator.setUsernameAttribute("uid")
     val formClient = new FormClient(s"$baseUrl/login", authenticator)

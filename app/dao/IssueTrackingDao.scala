@@ -18,23 +18,30 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
 
 trait IssueTrackingDao extends BaseDao[Issue, Long] {
-  def listGmcs: Future[Seq[String]]
-  def listOrigins: Future[Seq[String]]
-  def listPriorities: Future[Seq[Int]]
   def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[IssueView]]
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]]
   def findByCriteria(cr : SearchCriteria): Future[Seq[IssueView]]
-  def updateQueryDate(newDate: Date, issue: Issue): Future[Int]
-  def updateResolutionDate(newDate: Date, issue: Issue): Future[Int]
-  def changeStatus(newStatus: Status, issue: Issue): Boolean
-    // TODO To be removed
-  def tableSetup(data: Seq[Issue])
-  def findAllJoin: Future[Seq[(String,String,String)]]
 
+  def listGmcs: Future[Seq[String]]
+  def listOrigins: Future[Seq[String]]
+  def listPriorities: Future[Seq[Int]]
+
+  def insert(issueDate: IssueDates): (Boolean, String)
+  def insertIssueAndDates(issue: Issue, issueDate: IssueDates): (Boolean, String)
+
+  def updateQueryDate(newDate: Date, issue: Issue, user: String): Future[Int]
+  def updateRespondedDate(newDate: Date, issue: Issue, user: String): Future[Int]
+  def updateResolutionDate(newDate: Date, issue: Issue, user: String): Future[Int]
+  def changeStatus(newStatus: Status, issue: Issue): Boolean
+
+  def findAllJoin: Future[Seq[(String,String,String)]]
   def findQueryChain(selected: String): Future[Seq[QueryChain]]
 
   def nextIssueId: Future[Int]
   def nextIssueId(gmc: String) : Future[String]
+
+  // TODO To be removed
+  def tableSetup(issues: Seq[Issue], issuesDatesSeq: Seq[IssueDates])
 }
 
 /**
@@ -56,6 +63,7 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
   override def toTable = TableQuery[IssueTable]
 
   private val loggedIssues = toTable
+  private val issueDates = TableQuery[IssueDatesTable]
   private val issuesView = TableQuery[IssueViewTable]
   private val queryChains = TableQuery[QueryChainTable]
 
@@ -84,50 +92,14 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     "lsid" -> { (t: IssueViewTable) => t.lsid},
     "area" -> { (t: IssueViewTable) => t.area},
     "familyId" -> { (t: IssueViewTable) => t.familyId},
-    "queryDate" -> { (t: IssueViewTable) => t.queryDate},
+    "openDate" -> { (t: IssueViewTable) => t.openDate},
     "resolutionDate" -> { (t: IssueViewTable) => t.resolutionDate},
     "weeksOpen" -> { (t: IssueViewTable) => t.weeksOpen},
     "escalation" -> { (t: IssueViewTable) => t.escalation},
     "notes" -> { (t: IssueViewTable) => t.notes}
   )
 
-  //next issue id from separate explicit db sequence - issueid_id_seq
-  def nextIssueId(): Future[Int] = {
-    val value = db.run(
-      sql"select nextval('issueid_id_seq')".as[Int].head
-    )
-    value
-  }
 
-
-  def nextIssueId(gmc: String) : Future[String] =  {
-    val fullId: Future[String] = nextIssueId.map(id => f"${gmc}%s-${id}%07d")
-    fullId
-  }
-
-
-  def findAllJoin: Future[Seq[(String, String, String)]] = {
-//        val innerJoin = for {
-//          iss <- loggedIssues
-//          qcs <- queryChains if iss.issueId === qcs.issueId
-//        } yield (iss.issueId, qcs.comment, qcs.date)
-
-    val innerJoin = for {
-      (iss, qcs) <- loggedIssues join queryChains on (_.issueId === _.issueId)
-    } yield (iss.dataSource, qcs.comment, qcs.date)
-
-    val joinFuture = db.run(innerJoin.result)
-    joinFuture.map(println)
-    val aReport = ("fake", "data", "for")
-    val reports = ListBuffer(aReport)
-    Future(reports.toList.toSeq)
-  }
-
-  def findQueryChain(selected: String): Future[Seq[QueryChain]] = {
-    findAllQueryChain
-  }
-
-  def findAllQueryChain: Future[Seq[QueryChain]] = db.run(queryChains.sortBy(_.id).result)
 
   private def queryBySortCriteria(query: Query[IssueViewTable, IssueViewTable#TableElementType, Seq], sort: (String, String)) = {
     val rep = columnMap.getOrElse(sort._1, throw new RuntimeException(s"Invalid column used for sorting ${sort._1}"))
@@ -153,39 +125,66 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
   }
 
 
-  // TODO: To be removed
-  def tableSetup(data: Seq[Issue]) = {
-    val g = db.run(DBIO.seq(
-      // create the schema
-//      loggedIssues.schema.create, --actually this creates funny schema with uppercase names & forces double quotes "ID"
-      // to bulk insert our sample data
-      loggedIssues ++= data
-    ))
-    Await.result(g, 30 seconds)
-  }
 
   def findAllIssuesView: Future[Seq[IssueView]] = db.run(issuesView.result)
 
   def findAll: Future[Seq[Issue]] = db.run(loggedIssues.result)
 
+  def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[IssueView]] = {
+    var query = queryBySearchCriteria(searchRequest.searchCriteria)
+
+    searchRequest.sortCriteria.foreach { field =>
+      query = queryBySortCriteria(query, (field._1, field._2))
+    }
+    val issuesFuture = db.run(
+      query.drop(searchRequest.offset).take(searchRequest.size).result
+    )
+
+    val filterIssuesCount: Future[Int] = db.run(
+      query.length.result
+    )
+
+    val eventualPageResult: Future[SearchResult[IssueView]] = filterIssuesCount.flatMap {
+      total => issuesFuture.map {
+        issues => {
+          SearchResult(issues, total)
+        }
+      }
+    }
+    eventualPageResult
+  }
+
   def findByCriteria(cr : SearchCriteria): Future[Seq[IssueView]] = {
     db.run(queryBySearchCriteria(cr).result)
   }
 
-  def listGmcs: Future[Seq[String]] = {
-    val query = loggedIssues.map(_.gmc ).distinct.sorted
-    db.run(query.result)
+  def findById(id: Long): Future[Option[Issue]] = db.run(loggedIssues.filter(_.id === id).result.headOption)
+
+
+  def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]] = {
+
+    //sorting may not be needed...but input order does seem to be destroyed
+    //    val query = loggedIssues.filter(_.issueId inSetBind issueIds ).sortBy(issue => (issue.dateLogged.desc,issue.gmc))
+    val query = loggedIssues.filter(_.issueId inSetBind issueIds )
+
+    val issuesFuture = db.run(
+      query.result
+    )
+
+    val filterIssuesCount: Future[Int] = db.run(
+      query.length.result
+    )
+
+    val eventualPageResult: Future[SearchResult[Issue]] = filterIssuesCount.flatMap {
+      total => issuesFuture.map {
+        issues => {
+          SearchResult(issues, total)
+        }
+      }
+    }
+    eventualPageResult
   }
 
-  def listOrigins: Future[Seq[String]] = {
-    val query = loggedIssues.map(_.dataSource ).distinct.sorted
-    db.run(query.result)
-  }
-
-  def listPriorities: Future[Seq[Int]] = {
-    val query = loggedIssues.map(_.priority ).distinct.sorted
-    db.run(query.result)
-  }
 
   //we don't want generic update issue method, we want to control precisely which fields we update
   //only Notes field to start
@@ -215,18 +214,25 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     result
   }
 
-  def updateQueryDate(newDate: Date, issue: Issue): Future[Int] = {
+  def updateQueryDate(newDate: Date, issue: Issue, user: String): Future[Int] = {
     db.run(
-      loggedIssues.filter( _.issueId === issue.issueId).map(iss => (iss.queryDate)) update (Some(newDate))
+      issueDates.filter( _.issueId === issue.issueId).map(iss => (iss.openDate, iss.openWho)).update((Some(newDate), Some(user)))
     )
   }
 
-  def updateResolutionDate(newDate: Date, issue: Issue): Future[Int] = {
+  def updateRespondedDate(newDate: Date, issue: Issue, user: String): Future[Int] = {
     db.run(
-      loggedIssues.filter( _.issueId === issue.issueId).map(iss => (iss.resolutionDate)) update (Some(newDate))
+      issueDates.filter( _.issueId === issue.issueId).map(iss => (iss.respondedDate, iss.respondedWho)).update((Some(newDate), Some(user)))
     )
   }
 
+  def updateResolutionDate(newDate: Date, issue: Issue, user: String): Future[Int] = {
+    db.run(
+      issueDates.filter( _.issueId === issue.issueId).map(iss => (iss.resolutionDate, iss.resolutionWho)).update((Some(newDate), Some(user)))
+    )
+  }
+
+  @Override
   def insert(issue: Issue): (Boolean, String) = {
 
 //    testing only
@@ -263,6 +269,71 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     result
   }
 
+  //doesn't override as not in BaseDao
+  def insert(issueDate: IssueDates): (Boolean, String) = {
+
+    val insertQuery = issueDates += issueDate
+    val futureResult: Try[Int] = Await.ready(db.run(insertQuery), 30 seconds).value.get
+
+    val result = futureResult match {
+      case scala.util.Success(numRows) => {
+        if (numRows > 0) (true,"")
+        else {
+          val msg = s"insert dates db failed"
+          log.error(msg)
+          (false, msg)
+        }
+      }
+      case scala.util.Failure(ex) => {
+        val msg = s"insert dates db error ex=" + ex.toString
+        log.error(msg)
+        val sw = new StringWriter
+        ex.printStackTrace(new PrintWriter(sw))
+        log.error(sw.toString)
+        (false, msg)
+      }
+    }
+    result
+  }
+
+  def insertIssueAndDates(issue: Issue, issueDate: IssueDates): (Boolean, String) = {
+    val insertIssue = loggedIssues += issue
+    val insertDates = issueDates += issueDate
+//    val futureResult: Try[Int] = Await.ready(db.run(insertQuery), 30 seconds).value.get
+//    val futureResult: Try[Int] = Await.ready(db.run(insertQuery), 30 seconds).value.get
+
+    val operations = (for {
+      rowi <- insertIssue
+      rowd <- insertDates
+    } yield (rowi,rowd))
+
+    val triedTuple = Await.ready(db.run(operations.transactionally), 30 seconds).value.get
+    println("triedTuple=" + triedTuple)
+    val futureResult = operations
+    println("operations=" + operations)
+
+val result =(true, "")
+//    val result = futureResult match {
+//      case scala.util.Success(numRows) => {
+//        if (numRows > 0) (true,"")
+//        else {
+//          val msg = s"insert db failed"
+//          log.error(msg)
+//          (false, msg)
+//        }
+//      }
+//      case scala.util.Failure(ex) => {
+//        val msg = s"insert db error ex=" + ex.toString
+//        log.error(msg)
+//        val sw = new StringWriter
+//        ex.printStackTrace(new PrintWriter(sw))
+//        log.error(sw.toString)
+//        (false, msg)
+//      }
+//      case _ => {println("wha?? " + _.toString)}
+//    }
+    result
+  }
 
   def changeStatus(newStatus: Status, issue: Issue): Boolean = {
 
@@ -293,59 +364,80 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
 
 
-  def findById(id: Long): Future[Option[Issue]] = db.run(loggedIssues.filter(_.id === id).result.headOption)
 
 
-  def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]] = {
+  def listGmcs: Future[Seq[String]] = {
+    val query = loggedIssues.map(_.gmc ).distinct.sorted
+    db.run(query.result)
+  }
 
-    //sorting may not be needed...but input order does seem to be destroyed
-//    val query = loggedIssues.filter(_.issueId inSetBind issueIds ).sortBy(issue => (issue.dateLogged.desc,issue.gmc))
-    val query = loggedIssues.filter(_.issueId inSetBind issueIds )
+  def listOrigins: Future[Seq[String]] = {
+    val query = loggedIssues.map(_.dataSource ).distinct.sorted
+    db.run(query.result)
+  }
 
-    val issuesFuture = db.run(
-      query.result
-    )
-
-    val filterIssuesCount: Future[Int] = db.run(
-      query.length.result
-    )
-
-    val eventualPageResult: Future[SearchResult[Issue]] = filterIssuesCount.flatMap {
-      total => issuesFuture.map {
-        issues => {
-          SearchResult(issues, total)
-        }
-      }
-    }
-    eventualPageResult
+  def listPriorities: Future[Seq[Int]] = {
+    val query = loggedIssues.map(_.priority ).distinct.sorted
+    db.run(query.result)
   }
 
 
 
-  def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[IssueView]] = {
-    var query = queryBySearchCriteria(searchRequest.searchCriteria)
+  def findAllJoin: Future[Seq[(String, String, String)]] = {
+    //        val innerJoin = for {
+    //          iss <- loggedIssues
+    //          qcs <- queryChains if iss.issueId === qcs.issueId
+    //        } yield (iss.issueId, qcs.comment, qcs.date)
 
-    searchRequest.sortCriteria.foreach { field =>
-      query = queryBySortCriteria(query, (field._1, field._2))
-    }
-    val issuesFuture = db.run(
-      query.drop(searchRequest.offset).take(searchRequest.size).result
-    )
+    val innerJoin = for {
+      (iss, qcs) <- loggedIssues join queryChains on (_.issueId === _.issueId)
+    } yield (iss.dataSource, qcs.comment, qcs.date)
 
-    val filterIssuesCount: Future[Int] = db.run(
-      query.length.result
-    )
-
-    val eventualPageResult: Future[SearchResult[IssueView]] = filterIssuesCount.flatMap {
-      total => issuesFuture.map {
-        issues => {
-          SearchResult(issues, total)
-        }
-      }
-    }
-    eventualPageResult
+    val joinFuture = db.run(innerJoin.result)
+    joinFuture.map(println)
+    val aReport = ("fake", "data", "for")
+    val reports = ListBuffer(aReport)
+    Future(reports.toList.toSeq)
   }
 
+  def findQueryChain(selected: String): Future[Seq[QueryChain]] = {
+    findAllQueryChain
+  }
+
+  def findAllQueryChain: Future[Seq[QueryChain]] = db.run(queryChains.sortBy(_.id).result)
+
+
+
+
+  //next issue id from separate explicit db sequence - issueid_id_seq
+  def nextIssueId(): Future[Int] = {
+    val value = db.run(
+      sql"select nextval('issueid_id_seq')".as[Int].head
+    )
+    value
+  }
+
+  def nextIssueId(gmc: String) : Future[String] =  {
+    val fullId: Future[String] = nextIssueId.map(id => f"${gmc}%s-${id}%07d")
+    fullId
+  }
+
+
+
+  // TODO: To be removed
+  def tableSetup(issues: Seq[Issue], issuesDatesSeq: Seq[IssueDates]) = {
+    val issueResults = db.run(DBIO.seq(
+      //      loggedIssues.schema.create, --actually this creates funny schema with uppercase names & forces double quotes "ID"
+      // bulk insert our sample data
+      loggedIssues ++= issues
+    ))
+    Await.result(issueResults, 30 seconds)
+
+    val issueDatesResults = db.run(DBIO.seq(
+      issueDates ++= issuesDatesSeq
+    ))
+    Await.result(issueDatesResults, 30 seconds)
+  }
 
 
   /** **************  Table definition ***************/
@@ -378,20 +470,38 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
     def familyId = column[Option[String]]("family_id")
 
-    def queryDate = column[Option[Date]]("query_date")
+    def notes = column[Option[String]]("notes")
 
-    def weeksOpen = column[Option[Int]]("weeks_open")
+
+    override def * : ProvenShape[Issue] = (id, issueId, status, dateLogged, participantId, dataSource, priority,
+      dataItem, shortDesc, gmc, lsid, area, description, familyId, notes) <>((Issue.apply _).tupled, Issue.unapply)
+
+  }
+
+  /** **************  Table definition ***************/
+  class IssueDatesTable(tag: Tag) extends Table[IssueDates](tag, "issuedates") {
+    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+
+    def issueId = column[String]("issue_id")
+//    def issue = foreignKey("issue_fkeyA", issueId, loggedIssues)(_.issueId, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+
+    def openDate = column[Option[Date]]("open_date")
+
+    def respondedDate = column[Option[Date]]("responded_date")
 
     def resolutionDate = column[Option[Date]]("resolution_date")
 
     def escalation = column[Option[Date]]("escalation")
 
-    def notes = column[Option[String]]("notes")
+    def openWho = column[Option[String]]("open_who")
+
+    def respondedWho = column[Option[String]]("responded_who")
+
+    def resolutionWho = column[Option[String]]("resolution_who")
 
 
-    override def * : ProvenShape[Issue] = (id, issueId, status, dateLogged, participantId, dataSource, priority,
-      dataItem, shortDesc, gmc, lsid, area, description, familyId, queryDate, weeksOpen, resolutionDate,
-      escalation, notes) <>((Issue.apply _).tupled, Issue.unapply)
+    override def * : ProvenShape[IssueDates] = (id, issueId, openDate, respondedDate, resolutionDate, escalation,
+      openWho, respondedWho, resolutionWho) <>((IssueDates.apply _).tupled, IssueDates.unapply)
 
   }
 
@@ -425,7 +535,7 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
     def familyId = column[Option[String]]("family_id")
 
-    def queryDate = column[Option[Date]]("query_date")
+    def openDate = column[Option[Date]]("open_date")
 
     def weeksOpen = column[Option[Int]]("weeks_open")
 
@@ -437,7 +547,7 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
 
     override def * : ProvenShape[IssueView] = (id, issueId, status, dateLogged, participantId, dataSource, priority,
-      dataItem, shortDesc, gmc, lsid, area, description, familyId, queryDate, weeksOpen, resolutionDate,
+      dataItem, shortDesc, gmc, lsid, area, description, familyId, openDate, weeksOpen, resolutionDate,
       escalation, notes) <>((IssueView.apply _).tupled, IssueView.unapply)
 
   }

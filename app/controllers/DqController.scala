@@ -34,7 +34,7 @@ class DqController @Inject()(override val config: Config, override val playSessi
   val log: Logger = LoggerFactory.getLogger(getClass)
   val baseUrl: String = configuration.getString("play.http.context") get
 
-  //pac4j profile
+  //pac4j profiles
   def getProfiles(implicit request: RequestHeader): List[CommonProfile] = {
     val webContext = new PlayWebContext(request, playSessionStore)
     val sessionStore: PlayCacheSessionStore = playSessionStore.asInstanceOf[PlayCacheSessionStore]
@@ -51,6 +51,11 @@ class DqController @Inject()(override val config: Config, override val playSessi
 //    println("got5=" + profiles.get(0).getUsername)
 
     JavaConversions.asScalaBuffer(profiles).toList
+  }
+
+  def getUserName(implicit request: RequestHeader): String = {
+    if( getProfiles(request).isEmpty) throw new SecurityException("no profile available")
+    else getProfiles(request).head.getId
   }
 
   /** Create an Action to render an HTML page with a welcome message.
@@ -72,7 +77,7 @@ class DqController @Inject()(override val config: Config, override val playSessi
 
   def listAjaxAsync = Action.async(parse.tolerantFormUrlEncoded) { implicit req =>
 
-//    getProfiles(req)
+    getProfiles(req)
     val searchRequest: SearchRequest = DatatablesRequestBuilder.build(req.body ++ req.queryString)
 
     val findResult: Future[SearchResult[IssueView]] = issueTracking.findBySearchRequest(searchRequest)
@@ -140,7 +145,7 @@ class DqController @Inject()(override val config: Config, override val playSessi
 
     val findResult: Future[SearchResult[IssueView]] = issueTracking.findBySearchRequest(searchRequest)
 
-    val csv = new StringBuilder(Issue.csvHeaderForUI + "\n")
+    val csv = new StringBuilder(IssueView.csvHeaderForUI + "\n")
 
     findResult.map {
       pageResult => {
@@ -195,7 +200,7 @@ class DqController @Inject()(override val config: Config, override val playSessi
       val newStatus = domain.Status.allStatuses.find(_.toString == change).get
       log.debug(s"selected issues=$selected change=$change newStatus=$newStatus")
 
-      val failures: Future[List[(String, Throwable)]] = issueTracking.changeStatus(newStatus,issueIds)
+      val failures: Future[List[(String, Throwable)]] = issueTracking.changeStatus(newStatus,issueIds, getUserName(req))
 
       val eventualResult: Future[Result] = failures.map { failed => {
         if (failed.isEmpty == 0) Ok("OK")

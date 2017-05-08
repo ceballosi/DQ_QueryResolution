@@ -161,10 +161,7 @@ class IssueImportValidator @Inject()(issueTrackingDao: IssueTrackingDao)(implici
       case scala.util.Failure(e) => log.error(e.toString)
     }
 
-    val escalation: Date = candidate.dateLogged match {
-      case date => (new DateTime(date)).plusDays(14).toDate //always returns a date (even for a null)
-    }
-    candidate.copy(issueId = nextIssueId, status = Draft, queryDate = None, weeksOpen = None, resolutionDate = None, escalation = Some(escalation))
+    candidate.copy(issueId = nextIssueId, status = Draft)
   }
 
 

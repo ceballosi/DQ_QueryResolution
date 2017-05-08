@@ -20,10 +20,6 @@ CREATE TABLE issue
   lsid VARCHAR(50),
   area VARCHAR(50),                 -- RD / Cancer
   family_id VARCHAR(50),
-  query_date timestamp without time zone,
-  weeks_open integer,
-  resolution_date timestamp without time zone,
-  escalation timestamp without time zone,
   notes VARCHAR(500),
   CONSTRAINT "issue_pkey1" PRIMARY KEY (id)
 )

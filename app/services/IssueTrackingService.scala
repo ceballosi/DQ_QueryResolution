@@ -8,30 +8,29 @@ import javax.inject.{Inject, Singleton}
 import dao.Searching.{SearchRequest, SearchResult}
 import dao.{IssueTrackingDao, SearchCriteria}
 import domain._
+import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.Try
+import scala.util.{Success, Try}
 
 trait IssueTrackingService {
+  def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[IssueView]]
+  def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]]
+  def findByCriteria(cr : SearchCriteria): Future[Seq[IssueView]]
   def allIssues: Future[Seq[Issue]]
+
   def listGmcs: Future[Seq[String]]
   def listOrigins: Future[Seq[String]]
   def listPriorities: Future[Seq[Int]]
-  def allIssuesNow: List[Issue]
-  def findByCriteria(cr : SearchCriteria): Future[Seq[IssueView]]
-  def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]]
-  def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[IssueView]]
+
   def importFile(file: File): List[(Int, Throwable)]
-  def changeStatus(newStatus: Status, issueIds: List[String]): Future[List[(String, Throwable)]]
+  def changeStatus(newStatus: Status, issueIds: List[String], user: String): Future[List[(String, Throwable)]]
   def save(issue: Issue): (Boolean, String)
   def update(issue: Issue): (Boolean, String)
-
-  //TODO : To be removed (temporary method to create a table and populate data)
-  def tmpMethod: Future[Unit]
 
   def allQc: Future[Seq[QueryChain]]
   def allQcJoin: Future[Seq[(String,String,String)]]
@@ -40,6 +39,9 @@ trait IssueTrackingService {
   def queryChain(selected: String): Future[Seq[QueryChain]]
 
   def nextIssueId(gmc: String) : Future[String]
+
+  //TODO : remove temporary method to populate data
+  def tmpMethod: Future[Unit]
 }
 
 @Singleton
@@ -55,17 +57,14 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
 
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]] =  issueTrackingDao.findByIssueIds(issueIds)
 
+  def findByCriteria(searchCriteria : SearchCriteria): Future[Seq[IssueView]] =
+    issueTrackingDao.findByCriteria(searchCriteria)
+
 
   def allIssues: Future[Seq[Issue]] = issueTrackingDao.findAll
-   /*{
-    Future {
-      var issues: List[LoggedIssue] = findAllIssues
-      for(x <- 1 to 5){
-        issues = issues ::: issues
-  }
-      issues
-    }
-  } */
+
+
+
 
   def listGmcs: Future[Seq[String]] = issueTrackingDao.listGmcs
 
@@ -73,41 +72,8 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
 
   def listPriorities: Future[Seq[Int]] = issueTrackingDao.listPriorities
 
-  def findByCriteria(searchCriteria : SearchCriteria): Future[Seq[IssueView]] =
-    issueTrackingDao.findByCriteria(searchCriteria)
-
-  def allIssuesNow: List[Issue] = {
-    var issues: List[Issue] = findAllIssues
-    for(x <- 1 to 5){
-      issues = issues ::: issues
-    }
-    issues
-  }
 
 
-
-  def allQc: Future[Seq[QueryChain]] = ???
-//  def allQc: Future[Seq[QueryChain]] = {
-//    var qc: Future[Seq[QueryChain]] = qcDao.findAll
-//    qc
-//  }
-
- def allQcJoin: Future[Seq[(String,String,String)]] = ???
-// def allQcJoin: Future[Seq[(String,String,String)]] = {
-//   val qc: Future[Seq[(String, String, String)]] = qcDao.findAllJoin
-//   qc
-//  }
-
-  def findAllJoin: Future[Seq[(String,String,String)]]= {
-    val alljoin: Future[Seq[(String, String, String)]] = issueTrackingDao.findAllJoin
-    alljoin
-  }
-
-  def queryChain(selected: String): Future[Seq[QueryChain]] = issueTrackingDao.findQueryChain(selected)
-
-  def findAllIssues: List[Issue] = {
-    tmpPopulateIssues
-  }
 
 
   //import is done in 3 stages, catching and accumulating failures at each and only passing successful issues to the next
@@ -133,6 +99,15 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
       val dbResult: (Boolean, String) = issueTrackingDao.insert(issue)
       if(!dbResult._1) {
         mutableFailures += ((idx, new Exception(dbResult._2)))
+
+      } else {
+
+        val escalation: Date = issue.dateLogged match {
+          case date => (new DateTime(date)).plusDays(14).toDate //always returns a date (even for a null)
+        }
+        val issueDates = IssueDates(0,issue.issueId,None,None,None,Some(escalation),None,None,None)
+        issueTrackingDao.insert(issueDates)
+
       }
     }
     //return all failures sorted/merged by row number
@@ -151,14 +126,14 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
 
 
 
-  def changeStatus(newStatus: Status, issueIds: List[String]): Future[List[(String, Throwable)]] = {
+  def changeStatus(newStatus: Status, issueIds: List[String], user: String): Future[List[(String, Throwable)]] = {
     val failures = new ListBuffer[(String, Throwable)]
 
     findIssuesInOrder(issueIds).foreach { issue =>
       if(!issueTrackingDao.changeStatus(newStatus, issue)) {
         failures += ((issue.issueId, new Exception("changeStatus failed")))
       } else {
-        updateDatesOnly(newStatus, issue)
+        changeStatusDatesUpdate(newStatus, issue, user)
       }
     }
 
@@ -166,7 +141,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
   }
 
 
-  def findIssuesInOrder(issueIds: List[String]): List[Issue] = {
+  private def findIssuesInOrder(issueIds: List[String]): List[Issue] = {
     val orderedIssues = ListBuffer[Issue]()
 
     //split into 2 methods find issues with exception handling & iterate/change with error handling
@@ -189,33 +164,81 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
     orderedIssues.toList
   }
 
-  def save(issue: Issue): (Boolean, String) = issueTrackingDao.insert(issue)
+  def save(issue: Issue): (Boolean, String) = {
+    var result = issueTrackingDao.insert(issue)
+
+    if (result._1) {
+      val escalation: Date = issue.dateLogged match {
+        case date => (new DateTime(date)).plusDays(14).toDate //always returns a date (even for a null)
+      }
+      val issueDates = IssueDates(0, issue.issueId, None, None, None, Some(escalation), None, None, None)
+      result = issueTrackingDao.insert(issueDates)
+    }
+    result
+  }
+
+ def saveTRANS(issue: Issue): (Boolean, String) = {
+   val escalation: Date = issue.dateLogged match {
+     case date => (new DateTime(date)).plusDays(14).toDate //always returns a date (even for a null)
+   }
+   val issueDates = IssueDates(0,issue.issueId,None,None,None,Some(escalation),None,None,None)
+
+   issueTrackingDao.insertIssueAndDates(issue, issueDates)
+  }
+
 
   def update(issue: Issue): (Boolean, String) = issueTrackingDao.update(issue)
 
-  def updateDatesOnly(newStatus: Status, issue: Issue) = {
+  def changeStatusDatesUpdate(newStatus: Status, issue: Issue, user: String) = {
     newStatus match {
       case Open => {
-        issueTrackingDao.updateQueryDate(new Date(), issue)
+        issueTrackingDao.updateQueryDate(new Date(), issue, user)
+      }
+      case Responded => {
+        issueTrackingDao.updateRespondedDate(new Date(), issue, user)
       }
       case Resolved => {
-        issueTrackingDao.updateResolutionDate(new Date(), issue)
+        issueTrackingDao.updateResolutionDate(new Date(), issue, user)
       }
       case _ =>
     }
   }
 
 
+
+  def allQc: Future[Seq[QueryChain]] = ???
+  //  def allQc: Future[Seq[QueryChain]] = {
+  //    var qc: Future[Seq[QueryChain]] = qcDao.findAll
+  //    qc
+  //  }
+
+  def allQcJoin: Future[Seq[(String,String,String)]] = ???
+  // def allQcJoin: Future[Seq[(String,String,String)]] = {
+  //   val qc: Future[Seq[(String, String, String)]] = qcDao.findAllJoin
+  //   qc
+  //  }
+
+  def findAllJoin: Future[Seq[(String,String,String)]]= {
+    val alljoin: Future[Seq[(String, String, String)]] = issueTrackingDao.findAllJoin
+    alljoin
+  }
+
+  def queryChain(selected: String): Future[Seq[QueryChain]] = issueTrackingDao.findQueryChain(selected)
+
+
+
   def nextIssueId(gmc: String) : Future[String] = issueTrackingDao.nextIssueId(gmc)
+
 
 
   //TODO : To be removed (temporary method to provide a handler to the controller for creating a table using sample model)
   def tmpMethod = Future {
-    issueTrackingDao.tableSetup(tmpPopulateIssues.toSeq)
+    val tuple: (List[Issue], List[IssueDates]) = tmpPopulateIssues
+    issueTrackingDao.tableSetup(tuple._1.toSeq, tuple._2.toSeq)
   }
 
   //TODO : To be removed
-  private def tmpPopulateIssues = {
+  private def tmpPopulateIssues: (List[Issue], List[IssueDates]) = {
     import java.time.temporal.ChronoUnit.DAYS
 
     import scala.util.Random
@@ -228,12 +251,13 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
     val dataItemList = List("Gender", "FamilyId", "DOB", "Excision Margin", "Biological Relationship to Proband")
     val shortDescList = List("missing", "bad data", "incorrect entry", "invalid", "re-submission", "out of range")
     val areaList = List("Cancer", "RD")
+    val whoList = List("fred","wilma","barney","betty")
 
     def randomDateBetween(from: LocalDate, to: LocalDate) = {
       val d = from.plusDays(r.nextInt(DAYS.between(from, to).toInt))
       Date.from(d.atStartOfDay(ZoneId.systemDefault()).toInstant())
     }
-    val data = Issue(
+    val issue = Issue(
       1,
       "RIP-000022",
       statuses(r.nextInt(statuses.length)),
@@ -248,6 +272,14 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
       "RD",
       "Issue with family group size: Please see 'Group Issues' tab for more details and potential resolutions",
       None,
+      None
+    )
+
+    val issueDates = IssueDates(
+      1,
+      "RIP-000022",
+      None,
+      None,
       None,
       None,
       None,
@@ -255,15 +287,19 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
       None
     )
 
-    val issueLs = ListBuffer(data)
+    val issues = ListBuffer(issue)
+    val issueDatesLs = ListBuffer(issueDates)
 
-    data.copy(status = statuses(r.nextInt(statuses.length)))
+//    issue.copy(status = statuses(r.nextInt(statuses.length)))
     (1 to 10000).foreach { x =>
 
       val randGmc = gmcList(r.nextInt(gmcList.length))
       val statusChosen= statuses(r.nextInt(statuses.length))
       val dateCreated = randomDateBetween(LocalDate.of(2016, 12, 1), LocalDate.now().minusDays(3))
-
+      val who = whoList(r.nextInt(whoList.length))
+      var openWho: Option[String] = None
+      var respondedWho: Option[String] = None
+      var resolutionWho: Option[String] = None
       val lsidList = List(null,"lsid" + "%05d".format(x))
 
       var familyOption: Option[String] = Some("%05d".format(x))
@@ -271,14 +307,27 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
         familyOption = None
       }
 
+      var openDate: Option[Date] = None
+      var respondedDate: Option[Date] = None
       var resolutionDate: Option[Date] = None
-      if (statusChosen == Resolved) {
-        resolutionDate = Some(org.joda.time.LocalDate.fromDateFields(dateCreated).plusDays(25).toDate)
+
+      if (Open == statusChosen) {
+        if(x%3==0) {
+          openDate = Some(org.joda.time.LocalDate.fromDateFields(dateCreated).plusDays(2).toDate)
+          openWho = Some(who)
+        }
       }
 
-      var queryDate: Option[Date] = None
-      if (List(Open,Responded).contains(statusChosen)) {
-        if(x%3==0) queryDate = Some(org.joda.time.LocalDate.fromDateFields(dateCreated).plusDays(2).toDate)
+      if (Responded == statusChosen) {
+        if(x%6==0) {
+          respondedDate = Some(org.joda.time.LocalDate.fromDateFields(dateCreated).plusDays(8).toDate)
+          respondedWho = Some(who)
+        }
+      }
+
+      if (statusChosen == Resolved) {
+        resolutionDate = Some(org.joda.time.LocalDate.fromDateFields(dateCreated).plusDays(25).toDate)
+        resolutionWho = Some(who)
       }
 
       val escalation = org.joda.time.LocalDate.fromDateFields(dateCreated).plusDays(14).toDate
@@ -291,7 +340,7 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
         case scala.util.Failure(e) => log.error(e.toString)
       }
 
-      val c = data.copy(
+      val copy = issue.copy(
         gmc = randGmc,
         issueId = nextIssueId,
         status = statusChosen,
@@ -303,13 +352,24 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
         shortDesc = shortDescList(r.nextInt(shortDescList.length)),
         lsid = Option(lsidList(r.nextInt(lsidList.length))),
         area = areaList(r.nextInt(areaList.length)),
-        familyId = familyOption,
-        queryDate = queryDate,
-        resolutionDate = resolutionDate,
-        escalation = Some(escalation)
+        familyId = familyOption
       )
-      issueLs += c
+
+      val copyd = issueDates.copy(
+        issueId = nextIssueId,
+        openDate = openDate,
+        respondedDate = respondedDate,
+        resolutionDate = resolutionDate,
+        escalation = Some(escalation),
+        openWho = openWho,
+        respondedWho = respondedWho,
+        resolutionWho = resolutionWho
+      )
+
+      issues += copy
+      issueDatesLs += copyd
     }
-    issueLs.toList
+
+    (issues.toList, issueDatesLs.toList)
   }
 }

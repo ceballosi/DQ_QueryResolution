@@ -23,6 +23,11 @@ header {
     left: 0;
     right: 0;
     height: 55px;
+    background-color: #a9c2d8;
+    width: 100%;
+    font-size: 24px;
+    font-weight: 500;
+    color: white;
 }
 
 nav {
@@ -42,11 +47,6 @@ section {
     right: 0;
     bottom: 0;
     margin-top: 20px;
-}
-
-header {
-    background-color: #a9c2d8;
-    width: 100%;
 }
 
 footer {
@@ -81,13 +81,10 @@ footer {
 .qchain-gmc {
     background-color: #D7E6F3;
 }
-/* this isn't doing it's job to centre the text - fix or remove RR*/
-.appName {
-    width: 100%;
-    align-content: space-around;
-    text-align: justify;
-    color: #fbfbfb;
-    display: inline;
+
+.dqmsReset {
+    all: initial;
+    all: unset;
 }
 
 /* this is NOT RECOMMENDED way of overriding bootstrap font size - fix and remove RR*/
