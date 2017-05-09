@@ -7,7 +7,7 @@ import controllers.UiUtils._
 import dao.Searching.{SearchRequest, SearchResult}
 import domain._
 import org.pac4j.core.config.Config
-import org.pac4j.core.profile.{ProfileManager, CommonProfile}
+import org.pac4j.core.profile.{CommonProfile, ProfileManager}
 import org.pac4j.play.PlayWebContext
 import org.pac4j.play.scala.Security
 import org.pac4j.play.store.{PlayCacheSessionStore, PlaySessionStore}
@@ -19,7 +19,7 @@ import play.api.libs.json.Json._
 import play.api.mvc.MultipartFormData.FilePart
 import play.api.mvc._
 import play.libs.concurrent.HttpExecutionContext
-import services.{IssueTrackingService, MailService}
+import services.{IssueTrackingService, MailService, ReportCalculator}
 
 import scala.collection.JavaConversions
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -32,7 +32,7 @@ class DqController @Inject()(override val config: Config, override val playSessi
                             (implicit executionContext: ExecutionContext) extends Controller with Security[CommonProfile] {
 
   val log: Logger = LoggerFactory.getLogger(getClass)
-  val baseUrl: String = configuration.getString("play.http.context") get
+  val baseUrl: String = configuration.getString("play.http.context").get
 
   //pac4j profiles
   def getProfiles(implicit request: RequestHeader): List[CommonProfile] = {
@@ -54,6 +54,7 @@ class DqController @Inject()(override val config: Config, override val playSessi
   }
 
   def getUserName(implicit request: RequestHeader): String = {
+//    "rr"
     if( getProfiles(request).isEmpty) throw new SecurityException("no profile available")
     else getProfiles(request).head.getId
   }
@@ -217,44 +218,14 @@ class DqController @Inject()(override val config: Config, override val playSessi
       val sw = new StringWriter
       e.printStackTrace(new PrintWriter(sw))
       log.error(s"Change Status failed ${sw.toString}")
-      Future(Ok("Change Status failed"))
+      Future(Ok(s"Change Status failed - ${sw.toString}"))
     }
   }
 
-  def reportsWorks = Action { implicit req =>
-    val findResult: Future[Seq[QueryChain]] = issueTracking.allQc
-    var total: Int = 0
-    var selectedIssues: Seq[Issue] = null
-
-    findResult.onComplete{
-      case Success(chains) => {
-        chains.map{println}
-      }
-      case Failure(e) => {e.printStackTrace}
-    }
-
-    Ok(Json.toJson("printed chains?"))
-  }
 
   def reports = Action { implicit req =>
-    val findResult: Future[Seq[(String,String,String)]] = issueTracking.findAllJoin
-
-    findResult.onComplete{
-      case Success(chains) => {
-        chains.map{tuple => println(s"1:${tuple._1} 2:${tuple._2} 3:${tuple._3}")}
-      }
-      case Failure(e) => {e.printStackTrace}
-    }
-
-    Ok(reportsToJson(null))
+    Ok(reportsToJson(ReportCalculator.statistics(issueTracking)))
   }
-
-//  def reports = Action { implicit req =>
-//    ReportCalculator
-//
-//
-//    Ok(reportsToJson(stats))
-//  }
 
 
   def queryChain = Action.async(parse.multipartFormData) { implicit req =>

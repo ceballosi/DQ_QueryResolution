@@ -5,8 +5,7 @@ import java.text.SimpleDateFormat
 import domain.QueryChain
 import play.api.libs.json._
 import play.api.mvc.{AnyContent, Request}
-
-import scala.collection.mutable.ListBuffer
+import services.IssueStats
 
 object UiUtils {
 
@@ -59,20 +58,22 @@ object UiUtils {
     Json.toJson(list)
   }
 
-  def reportsToJson(reportSeq: Seq[String]): JsValue = {
-    val aReport = ("fake","data","for","example")
-    var reports = ListBuffer(aReport)
-    reports += aReport
-    reports += aReport
 
-    val list: Seq[JsObject] = reports.map { report =>
-      Json.obj("outstanding" -> JsString(report._1),
-        "resolved" -> JsString(report._2),
-        "qtime" -> JsString(report._3),
-        "qitem" -> JsString(report._4))
+  def reportsToJson(statsList: Seq[IssueStats]): JsValue = {
+    val list: Seq[JsObject] = statsList.map {
+      stats => {
+        Json.obj(
+          "gmc" -> stats.gmc,
+          "outstanding" -> stats.outstanding,
+          "resolved" -> stats.resolved,
+          "qtime" -> stats.avgDaysOutstanding,
+          "qitem" -> Json.toJson(stats.freqDataItems.toString + " a slightly longer string ...a slightly longer string ...a slightly longer string ...a slightly longer string ...a slightly longer string ...")
+        )
+      }
     }
     Json.toJson(list)
   }
+
 
   def queryChainsToJson(queryChains: Seq[QueryChain]): JsValue = {
     val list: Seq[JsObject] = queryChains.map { queryChain =>

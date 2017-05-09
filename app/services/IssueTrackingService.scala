@@ -38,7 +38,9 @@ trait IssueTrackingService {
 
   def queryChain(selected: String): Future[Seq[QueryChain]]
 
-  def nextIssueId(gmc: String) : Future[String]
+  def nextIssueId(gmc: String): Future[String]
+  def issueCounts(gmc: String): (Int, Int)
+  def issueResolutionDuration(gmc: String): List[(String, Status, Option[Date], Option[Date])]
 
   //TODO : remove temporary method to populate data
   def tmpMethod: Future[Unit]
@@ -140,6 +142,22 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
     Future(failures.toList)
   }
 
+  private def changeStatusDatesUpdate(newStatus: Status, issue: Issue, user: String) = {
+    newStatus match {
+      case Open => {
+        issueTrackingDao.updateQueryDate(new Date(), issue, user)
+      }
+      case Responded => {
+        issueTrackingDao.updateRespondedDate(new Date(), issue, user)
+      }
+      case Resolved => {
+        issueTrackingDao.updateResolutionDate(new Date(), issue, user)
+      }
+      case _ =>
+    }
+  }
+
+
 
   private def findIssuesInOrder(issueIds: List[String]): List[Issue] = {
     val orderedIssues = ListBuffer[Issue]()
@@ -177,32 +195,8 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
     result
   }
 
- def saveTRANS(issue: Issue): (Boolean, String) = {
-   val escalation: Date = issue.dateLogged match {
-     case date => (new DateTime(date)).plusDays(14).toDate //always returns a date (even for a null)
-   }
-   val issueDates = IssueDates(0,issue.issueId,None,None,None,Some(escalation),None,None,None)
-
-   issueTrackingDao.insertIssueAndDates(issue, issueDates)
-  }
-
 
   def update(issue: Issue): (Boolean, String) = issueTrackingDao.update(issue)
-
-  def changeStatusDatesUpdate(newStatus: Status, issue: Issue, user: String) = {
-    newStatus match {
-      case Open => {
-        issueTrackingDao.updateQueryDate(new Date(), issue, user)
-      }
-      case Responded => {
-        issueTrackingDao.updateRespondedDate(new Date(), issue, user)
-      }
-      case Resolved => {
-        issueTrackingDao.updateResolutionDate(new Date(), issue, user)
-      }
-      case _ =>
-    }
-  }
 
 
 
@@ -229,9 +223,11 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
 
   def nextIssueId(gmc: String) : Future[String] = issueTrackingDao.nextIssueId(gmc)
 
+  def issueCounts(gmc: String) = issueTrackingDao.issueCounts(gmc)
 
+  def issueResolutionDuration(gmc: String) =   issueTrackingDao.issueResolutionDuration(gmc)
 
-  //TODO : To be removed (temporary method to provide a handler to the controller for creating a table using sample model)
+    //TODO : To be removed (temporary method to provide a handler to the controller for creating a table using sample model)
   def tmpMethod = Future {
     val tuple: (List[Issue], List[IssueDates]) = tmpPopulateIssues
     issueTrackingDao.tableSetup(tuple._1.toSeq, tuple._2.toSeq)

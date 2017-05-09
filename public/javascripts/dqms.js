@@ -274,6 +274,8 @@ function statusChange(selectedStatus) {
                         size: BootstrapDialog.SIZE_SMALL,
                         type: BootstrapDialog.TYPE_SUCCESS
                     });
+                } else if (data.startsWith("Change Status failed")) {
+                    alert("An unexpected error occurred, please see server logs:" + data);
                 } else {
                     var errorRows = "<tbody id='failuresTableBody'>";
 
@@ -494,15 +496,15 @@ function reportDisplay(name) {
         contentType: false,
         processData: false,
         success: function (data) {
-            var errorRows = "<tbody id='reportTableBody'>";
+            var reportRows = "<tbody id='reportTableBody'>";
 
             for (var i = 0; i < data.length; i++) {
-                errorRows += "<tr><td>" + data[i].outstanding + "</td><td>" + data[i].resolved + "</td>"
+                reportRows += "<tr><td>" + data[i].gmc + "</td><td>" + data[i].outstanding + "</td><td>" + data[i].resolved + "</td>"
                     + "<td>" + data[i].qtime + "</td><td>" + data[i].qitem + "</td></tr>";
             }
-            errorRows += "</tbody>";
+            reportRows += "</tbody>";
 
-            $("#reportTableBody").replaceWith(errorRows);
+            $("#reportTableBody").replaceWith(reportRows);
             $("#reportsModal").modal({backdrop: 'static'});
             $("#reportsModal").modal('show');
         },

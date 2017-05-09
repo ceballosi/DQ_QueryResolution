@@ -27,7 +27,6 @@ trait IssueTrackingDao extends BaseDao[Issue, Long] {
   def listPriorities: Future[Seq[Int]]
 
   def insert(issueDate: IssueDates): (Boolean, String)
-  def insertIssueAndDates(issue: Issue, issueDate: IssueDates): (Boolean, String)
 
   def updateQueryDate(newDate: Date, issue: Issue, user: String): Future[Int]
   def updateRespondedDate(newDate: Date, issue: Issue, user: String): Future[Int]
@@ -39,8 +38,10 @@ trait IssueTrackingDao extends BaseDao[Issue, Long] {
 
   def nextIssueId: Future[Int]
   def nextIssueId(gmc: String) : Future[String]
+  def issueCounts(gmc: String): (Int, Int)
+  def issueResolutionDuration(gmc: String): List[(String, Status, Option[Date], Option[Date])]
 
-  // TODO To be removed
+    // TODO To be removed
   def tableSetup(issues: Seq[Issue], issuesDatesSeq: Seq[IssueDates])
 }
 
@@ -296,44 +297,6 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     result
   }
 
-  def insertIssueAndDates(issue: Issue, issueDate: IssueDates): (Boolean, String) = {
-    val insertIssue = loggedIssues += issue
-    val insertDates = issueDates += issueDate
-//    val futureResult: Try[Int] = Await.ready(db.run(insertQuery), 30 seconds).value.get
-//    val futureResult: Try[Int] = Await.ready(db.run(insertQuery), 30 seconds).value.get
-
-    val operations = (for {
-      rowi <- insertIssue
-      rowd <- insertDates
-    } yield (rowi,rowd))
-
-    val triedTuple = Await.ready(db.run(operations.transactionally), 30 seconds).value.get
-    println("triedTuple=" + triedTuple)
-    val futureResult = operations
-    println("operations=" + operations)
-
-val result =(true, "")
-//    val result = futureResult match {
-//      case scala.util.Success(numRows) => {
-//        if (numRows > 0) (true,"")
-//        else {
-//          val msg = s"insert db failed"
-//          log.error(msg)
-//          (false, msg)
-//        }
-//      }
-//      case scala.util.Failure(ex) => {
-//        val msg = s"insert db error ex=" + ex.toString
-//        log.error(msg)
-//        val sw = new StringWriter
-//        ex.printStackTrace(new PrintWriter(sw))
-//        log.error(sw.toString)
-//        (false, msg)
-//      }
-//      case _ => {println("wha?? " + _.toString)}
-//    }
-    result
-  }
 
   def changeStatus(newStatus: Status, issue: Issue): Boolean = {
 
@@ -422,6 +385,31 @@ val result =(true, "")
     fullId
   }
 
+  def issueCounts(gmc: String): (Int, Int) = {
+    val outstandingStatus = List(Open, Responded)
+    val query1 = loggedIssues.filter(iss => iss.gmc === gmc).filter(_.status inSetBind outstandingStatus).length
+    val outstanding = Await.result(db.run(query1.result), 30 seconds)
+
+    val resolvedStatus = List(Resolved)
+    val query2 = loggedIssues.filter(iss => iss.gmc === gmc).filter(_.status inSetBind resolvedStatus).length
+    val resolved = Await.result(db.run(query2.result), 30 seconds)
+    (outstanding, resolved)
+  }
+
+  def issueResolutionDuration(gmc: String): List[(String, Status, Option[Date], Option[Date])] = {
+    val resolved = List(Resolved)
+
+    val resolvedIssues = loggedIssues.filter(iss => iss.gmc === gmc).filter(_.status inSetBind resolved)
+    val validDates = issueDates.filter(issd => issd.resolutionDate > issd.openDate)
+
+    val innerJoin = for {
+      (iss, issd) <- resolvedIssues join validDates on (_.issueId === _.issueId)
+
+    } yield (iss.issueId, iss.status, issd.openDate, issd.resolutionDate)
+
+    val resolutionDurations = Await.result(db.run(innerJoin.result), 30 seconds)
+    resolutionDurations.toList
+  }
 
 
   // TODO: To be removed
