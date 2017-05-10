@@ -4,7 +4,7 @@
 
 # home page
 GET         /                      controllers.DqController.listIssues
-GET         /tmp/create/db         controllers.DqController.tmpMethod
+#GET         /tmp/create/db         controllers.DqController.tmpMethod
 
 GET         /container             controllers.DqController.container
 POST        /list                  controllers.DqController.listAjaxAsync
@@ -14,7 +14,8 @@ GET         /listPriorities        controllers.DqController.listPriorities
 
 GET         /export                controllers.DqController.export
 GET         /send                  controllers.DqController.sendNotifications
-GET         /reports               controllers.DqController.reports
+GET         /report                controllers.DqController.report
+GET         /exportReport         controllers.DqController.exportReport
 POST        /upload                controllers.DqController.upload
 POST        /changeStatus          controllers.DqController.changeStatus
 POST        /querychain            controllers.DqController.queryChain

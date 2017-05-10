@@ -13,16 +13,17 @@
                                 <th>Outstanding</th>
                                 <th>Resolved</th>
                                 <th>Average days outstanding</th>
-                                <th>Frequency of data items</th>
+                                <th>Data item</th>
+                                <th>Frequency of data item</th>
                             </tr>
                         </thead>
                         <tbody id="reportTableBody"></tbody>
                     </table>
 
-                    <form name="exportReportForm" id="exportReportForm" method='get' action="/exportReport">
+                    <form name="exportReportForm" id="exportReportForm" method='get' action="/dqms/exportReport">
                         <input type="hidden" id="length" name="length" value="1" />
 
-                        <button type='submit' id="exportReport" class="btn btn-primary pull-left dqmsButton">Export Report</button>
+                        <button type='submit' id="exportReportButton" class="btn btn-primary pull-left dqmsButton">Export Report</button>
                     </form>
                 </div>
                 <div class="modal-footer"></div>

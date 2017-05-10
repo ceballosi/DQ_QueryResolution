@@ -41,6 +41,7 @@ trait IssueTrackingService {
   def nextIssueId(gmc: String): Future[String]
   def issueCounts(gmc: String): (Int, Int)
   def issueResolutionDuration(gmc: String): List[(String, Status, Option[Date], Option[Date])]
+  def dataItemsGroupedBy(gmc: String): List[(String,Int)]
 
   //TODO : remove temporary method to populate data
   def tmpMethod: Future[Unit]
@@ -227,7 +228,9 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
 
   def issueResolutionDuration(gmc: String) =   issueTrackingDao.issueResolutionDuration(gmc)
 
-    //TODO : To be removed (temporary method to provide a handler to the controller for creating a table using sample model)
+  def dataItemsGroupedBy(gmc: String): List[(String,Int)] = issueTrackingDao.dataItemsGroupedBy(gmc)
+
+  //TODO : To be removed (temporary method to provide a handler to the controller for creating a table using sample model)
   def tmpMethod = Future {
     val tuple: (List[Issue], List[IssueDates]) = tmpPopulateIssues
     issueTrackingDao.tableSetup(tuple._1.toSeq, tuple._2.toSeq)

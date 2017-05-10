@@ -21,7 +21,7 @@ class SaveIssueHelper @Inject()(issueTrackingService: IssueTrackingService, vali
 
     val newIssue = createIssue(request)
 
-    val (pass, error) = validate(newIssue)
+    val (pass, error) = validate(newIssue, isNew = true)
     if (pass) {
       save(newIssue)
     } else {
@@ -35,7 +35,7 @@ class SaveIssueHelper @Inject()(issueTrackingService: IssueTrackingService, vali
     //note if fuller edit capabilities are built it needs to be done this way...
     val issue = createIssue(request)  //currently retrieves most (but not all e.g. dates) the issue fields from the submission
 
-    val (pass, error) = validate(issue)
+    val (pass, error) = validate(issue, isNew = false)
     if (pass) {
       update(issue)
     } else {
@@ -73,8 +73,8 @@ class SaveIssueHelper @Inject()(issueTrackingService: IssueTrackingService, vali
   }
 
 
-  def validate(issue: Issue): (Boolean, String) = {
-    val (pass, error) = validator.validateIssue(1, issue)
+  def validate(issue: Issue, isNew: Boolean): (Boolean, String) = {
+    val (pass, error) = validator.validateIssue((1, issue), isNew)
 
     if (pass) {
       (pass, error)

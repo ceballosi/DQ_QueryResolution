@@ -67,7 +67,8 @@ object UiUtils {
           "outstanding" -> stats.outstanding,
           "resolved" -> stats.resolved,
           "qtime" -> stats.avgDaysOutstanding,
-          "qitem" -> Json.toJson(stats.freqDataItems.toString + " a slightly longer string ...a slightly longer string ...a slightly longer string ...a slightly longer string ...a slightly longer string ...")
+          "item" -> Json.toJson(stats.dataItem),
+          "count" -> Json.toJson(stats.itemCount)
         )
       }
     }

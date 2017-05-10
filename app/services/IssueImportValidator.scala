@@ -8,7 +8,7 @@ import com.wix.accord._
 import com.wix.accord.dsl._
 
 import dao.IssueTrackingDao
-import domain.{Draft, Issue, Status}
+import domain._
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.{Logger, LoggerFactory}
@@ -59,7 +59,7 @@ class IssueImportValidator @Inject()(issueTrackingDao: IssueTrackingDao)(implici
   implicit val issueValidator = validator[Issue] { issue =>
     issue.issueId as "invalid IssueId" is notEmpty
     //    issue.status.toString as "invalid Status" is notEmpty           // shouldn't need to validate a default
-    issue.status.toString as "invalid Status not Draft" is equalTo("Draft") // ditto
+//    issue.status.toString as "invalid Status not Draft" is equalTo("Draft") // ditto
 
     //    val now: Instant = DateTime.now().toInstant
     //    val lastYear: ReadableInstant = now.minus( Duration.standardDays( 365 ) )
@@ -83,7 +83,7 @@ class IssueImportValidator @Inject()(issueTrackingDao: IssueTrackingDao)(implici
     val fails: ListBuffer[(Int, Throwable)] = ListBuffer[(Int, Throwable)]()
 
     candidates.foreach(candidate => {
-      val (pass, error) = validateIssue(candidate)
+      val (pass, error) = validateIssue(candidate, isNew = true)
 
       if (pass) passes += candidate
       else {
@@ -95,7 +95,7 @@ class IssueImportValidator @Inject()(issueTrackingDao: IssueTrackingDao)(implici
   }
 
 
-  def validateIssue(candidate: (Int, Issue)): (Boolean, String) = {
+  def validateIssue(candidate: (Int, Issue), isNew: Boolean): (Boolean, String) = {
     import com.wix.accord._
     val result: Result = validate(candidate._2)
 
@@ -106,7 +106,7 @@ class IssueImportValidator @Inject()(issueTrackingDao: IssueTrackingDao)(implici
       }
     }
     //shouldn't need this if validation worked for date/status
-    resultTuple = additionalValidation(candidate, resultTuple)
+    resultTuple = additionalValidation(candidate, resultTuple, isNew)
     log.debug(s"row ${candidate._1} validation result $resultTuple")
     resultTuple
   }
@@ -124,14 +124,19 @@ class IssueImportValidator @Inject()(issueTrackingDao: IssueTrackingDao)(implici
   }
 
   //Yuk - wix.accord should have date valdn but doesn't work - may do next release?
-  def additionalValidation(candidate: (Int, Issue), resultTuple: (Boolean, String)): (Boolean, String) = {
+  def additionalValidation(candidate: (Int, Issue), resultTuple: (Boolean, String), isNew: Boolean): (Boolean, String) = {
 
     val issue = candidate._2
     val date = issue.dateLogged
     var booleanResult = resultTuple._1
     var errs = ListBuffer(resultTuple._2)
+    val updateStates = List(Draft,Open,Responded,Resolved,Archived)
 
-    if (issue.status != Draft) {
+    if (isNew && issue.status != Draft) {
+      booleanResult = false
+      errs += "invalid Status (not Draft)"
+    }
+    if (!isNew && (!updateStates.contains(issue.status))) {
       booleanResult = false
       errs += "invalid Status"
     }

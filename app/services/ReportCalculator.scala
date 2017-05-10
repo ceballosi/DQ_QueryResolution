@@ -8,19 +8,26 @@ import scala.concurrent.Await
 
 case class IssueStats(
                        gmc: String,
-                       open: Int,
-                       responded: Int,
-                       outstanding: Int, //Number of issues outstanding (by GMC) Open + Responded
-                       resolved: Int, //Number of queries resolved (by GMC)
+                       open: String,
+                       responded: String,
+                       outstanding: String, //Number of issues outstanding (by GMC) Open + Responded
+                       resolved: String, //Number of queries resolved (by GMC)
                        avgDaysOutstanding: String, //Average length of time queries are outstanding for (by GMC) (days?)
-                       freqDataItems: List[(String, Int)] //Frequency of data items (by GMC) (Item,number)
-                     )
+                       dataItem: String, //Frequency of data items (by GMC) (Item,number)
+                       itemCount: String //Frequency of data items (by GMC) (Item,number)
+                     ) {
+
+  def toCsvForUI(): String = {
+    s"$gmc,$outstanding,$resolved,$avgDaysOutstanding,$dataItem,$itemCount"
+  }
+}
 
 object ReportCalculator {
 
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-
+  def csvHeaderForUI(): String = "Gmc, Outstanding, Resolved, Average days outstanding, Data item, Frequency of data item"
+  
   def statistics(issueTracking: IssueTrackingService): List[IssueStats] = {
     val statsList = new ListBuffer[IssueStats]()
     import scala.concurrent.duration._
@@ -28,15 +35,16 @@ object ReportCalculator {
     val gmcs = Await.result(issueTracking.listGmcs, 30 seconds)
 
     gmcs.foreach { gmc =>
-      val gmcStats: IssueStats = generateStatsForGmc(gmc, issueTracking)
-      statsList += gmcStats
+      statsList ++= generateStatsForGmc(gmc, issueTracking)
     }
 
     statsList.toList
   }
 
 
-  def generateStatsForGmc(gmc: String, issueTracking: IssueTrackingService): IssueStats = {
+  def generateStatsForGmc(gmc: String, issueTracking: IssueTrackingService): List[IssueStats] = {
+    val statsGmcList = new ListBuffer[IssueStats]()
+
     val (outstanding, resolved) = issueTracking.issueCounts(gmc)
     val resolutionDurations = issueTracking.issueResolutionDuration(gmc)
 
@@ -52,12 +60,19 @@ object ReportCalculator {
       val avgDaysToResolve: Double = foldLeftSum.toDouble / daysToResolve.length
       log.debug(s"sum/avg of days for gmc $gmc , daysToResolve total = $foldLeftSum num resolved=${daysToResolve.length} avgDaysToResolve=$avgDaysToResolve")
 
-      IssueStats(gmc, 0, 0, outstanding, resolved, f"$avgDaysToResolve%1.2f" , List(("item", 3)))
+      statsGmcList += IssueStats(gmc, "0", "0", outstanding.toString, resolved.toString, f"$avgDaysToResolve%1.2f" , "", "")
     }else {
 
       log.debug(s"gmc $gmc , num resolved =${daysToResolve.length}")
-      IssueStats(gmc, 0, 0, outstanding, resolved, "0" , List(("item", 3)))
+      statsGmcList += IssueStats(gmc, "0", "0", outstanding.toString, resolved.toString, "0" , "", "")
     }
 
+
+    val dataItemsGroupedByGmc: List[(String, Int)] = issueTracking.dataItemsGroupedBy(gmc)
+    dataItemsGroupedByGmc.foreach(itemTuple => {
+      statsGmcList += IssueStats(gmc, "0", "0", "", "", "", itemTuple._1, itemTuple._2.toString)
+    })
+
+    statsGmcList.toList
   }
 }

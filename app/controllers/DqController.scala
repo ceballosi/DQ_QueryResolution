@@ -223,8 +223,25 @@ class DqController @Inject()(override val config: Config, override val playSessi
   }
 
 
-  def reports = Action { implicit req =>
+  def report = Action { implicit req =>
     Ok(reportsToJson(ReportCalculator.statistics(issueTracking)))
+  }
+
+
+  def exportReport = Action(parse.tolerantFormUrlEncoded) { implicit req =>
+
+    val issueStats = ReportCalculator.statistics(issueTracking)
+    val csv = new StringBuilder(ReportCalculator.csvHeaderForUI + "\n")
+
+    issueStats.map {
+      issueStat => {
+        csv ++= (issueStat.toCsvForUI + "\n")
+      }
+    }
+    log.info(s"exportReport returned ${issueStats.length} rows")
+
+    Ok(csv.toString()).as("text/csv").withHeaders(
+      CONTENT_DISPOSITION -> "attachment;filename=\"ExportReport.csv\"")
   }
 
 

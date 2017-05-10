@@ -491,7 +491,7 @@ function importCsv(name) {
 function reportDisplay(name) {
     var formData = new FormData();
     $.ajax({
-        url: '/dqms/reports',
+        url: '/dqms/report',
         data: formData,
         contentType: false,
         processData: false,
@@ -500,7 +500,7 @@ function reportDisplay(name) {
 
             for (var i = 0; i < data.length; i++) {
                 reportRows += "<tr><td>" + data[i].gmc + "</td><td>" + data[i].outstanding + "</td><td>" + data[i].resolved + "</td>"
-                    + "<td>" + data[i].qtime + "</td><td>" + data[i].qitem + "</td></tr>";
+                    + "<td>" + data[i].qtime + "</td><td>" + data[i].item + "</td><td>" + data[i].count + "</td></tr>";
             }
             reportRows += "</tbody>";
 
@@ -647,7 +647,7 @@ function bindAddFormValidation(isEdit) {
                     .closest('.control-group').addClass('valid').removeClass('error');
             },
             submitHandler: function () {
-                if (isEdit) {
+                if ($("#addModalTitle").text().startsWith("Edit")) {
                     updateIssue();            //validator is bound to save button & kicks off saveIssue if validation passes
                 } else {
                     saveIssue();            //validator is bound to save button & kicks off saveIssue if validation passes

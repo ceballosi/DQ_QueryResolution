@@ -40,6 +40,7 @@ trait IssueTrackingDao extends BaseDao[Issue, Long] {
   def nextIssueId(gmc: String) : Future[String]
   def issueCounts(gmc: String): (Int, Int)
   def issueResolutionDuration(gmc: String): List[(String, Status, Option[Date], Option[Date])]
+  def dataItemsGroupedBy(gmc: String): List[(String,Int)]
 
     // TODO To be removed
   def tableSetup(issues: Seq[Issue], issuesDatesSeq: Seq[IssueDates])
@@ -409,6 +410,22 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
     val resolutionDurations = Await.result(db.run(innerJoin.result), 30 seconds)
     resolutionDurations.toList
+  }
+
+  //count dataItemsGroupedBy gmc - this is the equivalent SQL
+  //    select data_item, count(data_item)
+  //    from issue
+  //      where gmc='GEL'
+  //    group by data_item
+  //    order by data_item
+  def dataItemsGroupedBy(gmc: String): List[(String, Int)] = {
+    val qDataItemsByGmc = loggedIssues.filter(iss => iss.gmc === gmc)
+      .groupBy(iss => iss.dataItem)
+      .map { case (dataItem, group) => (dataItem, group.map(_.dataItem).length) }
+      .sortBy(_._1)
+
+    val dataItemsByGmc = Await.result(db.run(qDataItemsByGmc.result), 30 seconds)
+    dataItemsByGmc.toList
   }
 
 
