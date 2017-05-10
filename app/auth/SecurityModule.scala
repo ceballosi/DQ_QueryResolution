@@ -34,7 +34,7 @@ class SecurityModule(environment: Environment, configuration: Configuration) ext
     bind(classOf[PlaySessionStore]).to(classOf[PlayCacheSessionStore])
 
     val callbackController = new CallbackController()
-    callbackController.setDefaultUrl(s"$baseUrl/container")
+    callbackController.setDefaultUrl(s"$baseUrl")
     callbackController.setMultiProfile(true)
     bind(classOf[CallbackController]).toInstance(callbackController)
 

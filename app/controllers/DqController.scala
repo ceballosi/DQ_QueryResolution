@@ -71,7 +71,7 @@ class DqController @Inject()(override val config: Config, override val playSessi
   //TODO : To be removed (Just a temporary method to create a table using model)
   def tmpMethod = Action.async { implicit req =>
     issueTracking.tmpMethod.map(_ =>
-      Redirect(routes.DqController.listIssues))
+      Redirect(routes.DqController.container()))
   }
 
 

@@ -3,10 +3,10 @@
 # ~~~~
 
 # home page
-GET         /                      controllers.DqController.listIssues
+GET         /                      controllers.DqController.container
 #GET         /tmp/create/db         controllers.DqController.tmpMethod
 
-GET         /container             controllers.DqController.container
+#GET         /container             controllers.DqController.container
 POST        /list                  controllers.DqController.listAjaxAsync
 GET         /listGmcs              controllers.DqController.listGmcs
 GET         /listOrigins           controllers.DqController.listOrigins
