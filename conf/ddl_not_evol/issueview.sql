@@ -19,8 +19,10 @@ CREATE OR REPLACE VIEW issueview AS
     iss.area,
     iss.family_id,
     issdt.open_date,
-    trunc(date_part('day' :: TEXT, now() :: TIMESTAMP WITHOUT TIME ZONE - issdt.open_date) /
-          7 :: DOUBLE PRECISION) AS weeks_open,
+    CASE
+    WHEN iss.status='Open'
+      THEN trunc(date_part('day' :: TEXT, now() :: TIMESTAMP WITHOUT TIME ZONE - issdt.open_date) / 7 :: DOUBLE PRECISION)
+    END AS weeks_open,
     issdt.resolution_date,
     issdt.escalation,
     iss.notes
