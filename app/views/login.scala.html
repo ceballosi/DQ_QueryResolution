@@ -2,6 +2,9 @@
 
 <!DOCTYPE html>
 <html lang="en">
+    @*needed to make form reset work in FFox, maybe jquerys setTimeout gets used*@
+    <script type="text/javascript" src="@routes.Assets.versioned("DataTables/jQuery-2.2.4/jquery-2.2.4.js")" type="text/javascript"></script>
+
     <head>
         <title>Login</title>
 
@@ -37,3 +40,15 @@
         </div>
     </body>
 </html>
+
+<script>
+    $(document).ready(function () {
+        //ensure form fields are cleared
+        setTimeout(resetLoginForm, 100);
+        setTimeout(resetLoginForm, 1000);
+    });
+
+    function resetLoginForm(){
+        document.forms[0].reset();
+    }
+</script>
