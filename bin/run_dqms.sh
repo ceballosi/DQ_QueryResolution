@@ -6,3 +6,7 @@ cd /Users/rickrees/Documents/ge/workspace2/dqms-0.1
 
 # -Dhttp.port=1234 -Dhttp.address=127.0.0.1
 #-Xms512M -Xmx1024M -Xss1M -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=256M
+
+#override conf entries e.g ldapUrl = ${?VALUE}
+#-Dconfig.file=/tmp/rick_dqms_test.conf
+#-Ddqms.ldap.ldapUrl='something-new'

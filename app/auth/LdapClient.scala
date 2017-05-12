@@ -2,6 +2,7 @@ package auth
 
 import java.time.Duration
 
+import com.typesafe.config.ConfigFactory
 import org.ldaptive.auth.{Authenticator => LdaptiveAuthenticator, PooledBindAuthenticationHandler, SearchDnResolver}
 import org.ldaptive.pool._
 import org.ldaptive.{ConnectionConfig, DefaultConnectionFactory}
@@ -12,13 +13,14 @@ import org.ldaptive.{ConnectionConfig, DefaultConnectionFactory}
   */
 object LdapClient {
 
-  val port = 389
-  val cn = "cn=%s,ou=people,dc=ge,dc=co,dc=uk"
+  val ldapUrl = ConfigFactory.load().getString("dqms.ldap.url")
+  val ldapPort = ConfigFactory.load().getString("dqms.ldap.port")
+  val baseDn = ConfigFactory.load().getString("dqms.ldap.basedn")
 
   val connectionConfig = new ConnectionConfig()
   connectionConfig setConnectTimeout Duration.ofMillis(500)
   connectionConfig setResponseTimeout Duration.ofMillis(1000)
-  connectionConfig setLdapUrl("ldap://10.10.0.20:" + port) //works through GeL core services ('cs') VPN
+  connectionConfig setLdapUrl(ldapUrl + ldapPort) //works through GeL core services ('cs') VPN
 
   val connectionFactory = new DefaultConnectionFactory()
   connectionFactory.setConnectionConfig(connectionConfig)
@@ -45,7 +47,7 @@ object LdapClient {
   authHandler setConnectionFactory pooledConnectionFactory
 
   val dnResolver = new SearchDnResolver(connectionFactory)
-  dnResolver.setBaseDn("ou=int,ou=people,dc=ge,dc=co,dc=uk")
+  dnResolver.setBaseDn(baseDn)
   dnResolver.setUserFilter("(uid={user})")
 
   val ldaptiveAuthenticator = new LdaptiveAuthenticator()

@@ -18,9 +18,10 @@ class SecurityModule(environment: Environment, configuration: Configuration) ext
   override def configure() = {
 
     val baseUrl = configuration.getString("play.http.context").get
+    val baseDn: String = configuration.getString("dqms.ldap.basedn").get
 
     val authenticator = new LdapProfileService(LdapClient.pooledConnectionFactory,
-      LdapClient.ldaptiveAuthenticator, "", "ou=int,ou=people,dc=ge,dc=co,dc=uk")
+      LdapClient.ldaptiveAuthenticator, "", baseDn)
 //    val authenticator = new LdapProfileService()    // no ldap version
 
     authenticator.setUsernameAttribute("uid")
