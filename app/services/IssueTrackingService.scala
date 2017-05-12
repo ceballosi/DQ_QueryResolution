@@ -18,8 +18,10 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Success, Try}
 
 trait IssueTrackingService {
+
   def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[IssueView]]
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]]
+  def findIssueViewByIssueIds(issueIds: List[String]): Future[SearchResult[IssueView]]
   def findByCriteria(cr : SearchCriteria): Future[Seq[IssueView]]
   def allIssues: Future[Seq[Issue]]
 
@@ -59,6 +61,8 @@ class IssueTrackingServiceImpl @Inject()(issueTrackingDao: IssueTrackingDao, val
   }
 
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]] =  issueTrackingDao.findByIssueIds(issueIds)
+
+  def findIssueViewByIssueIds(issueIds: List[String]): Future[SearchResult[IssueView]] = issueTrackingDao.findIssueViewByIssueIds(issueIds)
 
   def findByCriteria(searchCriteria : SearchCriteria): Future[Seq[IssueView]] =
     issueTrackingDao.findByCriteria(searchCriteria)

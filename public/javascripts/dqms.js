@@ -113,6 +113,7 @@ function loadGMCs() {
             } else {
                 alert("no GMCs to load - there may have been an error");
             }
+            applyFilterHighlights();
         },
         error: function (jqXHR, textStatus, errorThrown) {
             alert("An unexpected error occurred loading GMCs, please see server logs:" + textStatus + ': ' + errorThrown);
@@ -137,6 +138,7 @@ function loadOrigins() {
             } else {
                 alert("no list of Data Sources to load - there may have been an error");
             }
+            applyFilterHighlights();
         },
         error: function (jqXHR, textStatus, errorThrown) {
             alert("An unexpected error occurred loading Data Sources list, please see server logs:" + textStatus + ': ' + errorThrown);
@@ -160,6 +162,7 @@ function loadPriorities() {
             } else {
                 alert("no priorities to load - there may have been an error");
             }
+            applyFilterHighlights();
         },
         error: function (jqXHR, textStatus, errorThrown) {
             alert("An unexpected error occurred loading Priorities, please see server logs:" + textStatus + ': ' + errorThrown);
@@ -297,6 +300,44 @@ function statusChange(selectedStatus) {
     }
 }
 
+function applyFilterHighlights() {
+    if ($('#gmcSelect').val() == 'all') {
+        $('#gmcSelect').removeClass('dqmsSelected');
+    } else {
+        $('#gmcSelect').addClass('dqmsSelected');
+    }
+    if ($('#statusSelect').val() == 'all') {
+        $('#statusSelect').removeClass('dqmsSelected');
+    } else {
+        $('#statusSelect').addClass('dqmsSelected');
+    }
+    if ($('#originSelect').val() == 'all') {
+        $('#originSelect').removeClass('dqmsSelected');
+    } else {
+        $('#originSelect').addClass('dqmsSelected');
+    }
+    if ($('#prioritySelect').val() == 'all') {
+        $('#prioritySelect').removeClass('dqmsSelected');
+    } else {
+        $('#prioritySelect').addClass('dqmsSelected');
+    }
+    if ($('#areaSelect').val() == 'all') {
+        $('#areaSelect').removeClass('dqmsSelected');
+    } else {
+        $('#areaSelect').addClass('dqmsSelected');
+    }
+    if ($('#startDate').val() == '') {
+        $('#startDate').removeClass('dqmsSelected');
+    } else {
+        $('#startDate').addClass('dqmsSelected');
+    }
+    if ($('#endDate').val() == '') {
+        $('#endDate').removeClass('dqmsSelected');
+    } else {
+        $('#endDate').addClass('dqmsSelected');
+    }
+}
+
 function buildFilter() {
     var gmc = $('#gmcSelect').val() == 'all' ? '' : '&gmc=' + $('#gmcSelect').val();
     var status = $('#statusSelect').val() == 'all' ? '' : '&status=' + $('#statusSelect').val();
@@ -305,6 +346,9 @@ function buildFilter() {
     var area = $('#areaSelect').val() == 'all' ? '' : '&area=' + $('#areaSelect').val();
     var startDate = $('#startDate').val() == '-' ? '' : '&startDate=' + $('#startDate').val();
     var endDate = $('#endDate').val() == '-' ? '' : '&endDate=' + $('#endDate').val();
+
+    applyFilterHighlights();
+
     return gmc + status + origin + priority + area + startDate + endDate;
 }
 
@@ -432,21 +476,41 @@ function exportCsv() {
 
     $(':hidden#length').val("60000");       //TODO not sure what limit if any should be applied
 
-    function cleanHiddenInputs() {
-        $(':hidden#filter').remove();
-        $(':hidden#days').remove();
-        $(':hidden#gmc').remove();
-        $(':hidden#status').remove();
-        $(':hidden#origin').remove();
-        $(':hidden#priority').remove();
-        $(':hidden#area').remove();
-        $(':hidden#startDatehidden').remove();  //id name startDate/endDate clash with main form
-        $(':hidden#endDatehidden').remove();
-        $(':hidden#sortColKey').remove();
-        $(':hidden#sortDirKey').remove();
-    }
 }
 
+function cleanHiddenInputs() {
+    $(':hidden#filter').remove();
+    $(':hidden#days').remove();
+    $(':hidden#gmc').remove();
+    $(':hidden#status').remove();
+    $(':hidden#origin').remove();
+    $(':hidden#priority').remove();
+    $(':hidden#area').remove();
+    $(':hidden#startDatehidden').remove();  //id name startDate/endDate clash with main form
+    $(':hidden#endDatehidden').remove();
+    $(':hidden#sortColKey').remove();
+    $(':hidden#sortDirKey').remove();
+}
+
+function resetExportButton() {
+    $("#export").text("Export filtered");
+}
+
+function exportSelected(e) {
+    $(':hidden#exportSelectedIds').val('');
+    var selectedIds = new Array();
+
+    if (tableIssues.rows({selected: true}).count() > 0) {
+
+        tableIssues.rows({selected: true}).data().each(function (rowData) {
+            selectedIds.push(rowData.DT_RowId);
+        });
+        $(':hidden#exportSelectedIds').val(selectedIds.join());
+        $('#exportSelectedForm').submit();
+    }
+
+    e.preventDefault();
+}
 
 function importCsv(name) {
     var file = $('#importFile').get(0).files[0];
@@ -817,6 +881,7 @@ $(document).ready(function () {
 
     $("#allIssues").click(function (e) {
         resetInputs();
+        resetExportButton();
         var url = "/dqms/list?" + buildFilter();
         filterTable(tableIssues, "/dqms/list", e);
     });
@@ -834,6 +899,10 @@ $(document).ready(function () {
     $('#nav').on('change', '#gmcSelect, #statusSelect, #originSelect, #prioritySelect, #areaSelect', function (e) {
         var url = "/dqms/list?" + buildFilter();
         filterTable(tableIssues, url, e);
+    });
+
+    $('#nav').on('change', '#startDate, #endDate', function (e) {
+        applyFilterHighlights();
     });
 
     $('#nav').on('changeDate blur', '#startDate, #endDate', function (e) {
@@ -863,7 +932,12 @@ $(document).ready(function () {
 
 
     $("#export").click(function (e) {
-        exportCsv();
+        var anySelectedRows = tableIssues.rows({selected: true}).count() > 0;
+        if (anySelectedRows) {
+            exportSelected(e);
+        } else {
+            exportCsv();
+        }
     });
 
 
@@ -873,6 +947,17 @@ $(document).ready(function () {
             importCsv(selectedFile);
         }
     });
+
+
+    $('#main').on('click', '.select-checkbox', function (e) {
+        var anySelectedRows = tableIssues.rows({selected: true}).count() > 0;
+        if (anySelectedRows) {
+            $("#export").text("Export selected");
+        } else {
+            resetExportButton();
+        }
+    });
+
 
     $("#addForm").submit(function (e) {
         e.preventDefault();

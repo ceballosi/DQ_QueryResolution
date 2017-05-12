@@ -41,6 +41,10 @@ JUST A SIMPLE VIEW AS PART OF WORKFLOW DEFINITION
 
         <button type='submit' id="export" class="btn btn-primary pull-left dqmsButton">Export filtered</button>
     </form>
+    <form name="exportSelectedForm" id="exportSelectedForm" method='get' action="/dqms/exportSelected">
+        <input type="hidden" id="length" name="length" value="1" />
+        <input type="hidden" id="exportSelectedIds" name="exportSelectedIds" value="" />
+    </form>
 
 
     @*&nbsp;*@
@@ -65,6 +69,6 @@ JUST A SIMPLE VIEW AS PART OF WORKFLOW DEFINITION
         </span>
     </div>
 
-
+ <div class="row">&nbsp;</div>
 }
 

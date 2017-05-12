@@ -140,12 +140,25 @@ class DqController @Inject()(override val config: Config, override val playSessi
   }
 
 
-  def export = Action.async(parse.tolerantFormUrlEncoded) { implicit req =>
+
+  def exportSelected = Action.async(parse.tolerantFormUrlEncoded) { implicit req =>
+    val selected = param(req.queryString, "exportSelectedIds").get
+    log.debug(s"exportSelectedIds=$selected")
+    val issueIds = selected.split(",").toList
+
+    buildAndExportCsv(issueTracking.findIssueViewByIssueIds(issueIds))
+  }
+
+
+  def exportFiltered = Action.async(parse.tolerantFormUrlEncoded) { implicit req =>
 
     val searchRequest: SearchRequest = DatatablesRequestBuilder.build(req.body ++ req.queryString)
 
-    val findResult: Future[SearchResult[IssueView]] = issueTracking.findBySearchRequest(searchRequest)
+    buildAndExportCsv(issueTracking.findBySearchRequest(searchRequest))
+  }
 
+
+  private def buildAndExportCsv(findResult: Future[SearchResult[IssueView]]): Future[Result] = {
     val csv = new StringBuilder(IssueView.csvHeaderForUI + "\n")
 
     findResult.map {

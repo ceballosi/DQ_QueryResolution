@@ -18,8 +18,10 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
 
 trait IssueTrackingDao extends BaseDao[Issue, Long] {
+
   def findBySearchRequest(searchRequest: SearchRequest): Future[SearchResult[IssueView]]
   def findByIssueIds(issueIds: List[String]): Future[SearchResult[Issue]]
+  def findIssueViewByIssueIds(issueIds: List[String]): Future[SearchResult[IssueView]]
   def findByCriteria(cr : SearchCriteria): Future[Seq[IssueView]]
 
   def listGmcs: Future[Seq[String]]
@@ -178,6 +180,29 @@ class IssueTrackingDaoImpl @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
     )
 
     val eventualPageResult: Future[SearchResult[Issue]] = filterIssuesCount.flatMap {
+      total => issuesFuture.map {
+        issues => {
+          SearchResult(issues, total)
+        }
+      }
+    }
+    eventualPageResult
+  }
+
+  //same as above method but for view - should re-factor really
+  def findIssueViewByIssueIds(issueIds: List[String]): Future[SearchResult[IssueView]] = {
+
+    val query = issuesView.filter(_.issueId inSetBind issueIds )
+
+    val issuesFuture = db.run(
+      query.result
+    )
+
+    val filterIssuesCount: Future[Int] = db.run(
+      query.length.result
+    )
+
+    val eventualPageResult: Future[SearchResult[IssueView]] = filterIssuesCount.flatMap {
       total => issuesFuture.map {
         issues => {
           SearchResult(issues, total)

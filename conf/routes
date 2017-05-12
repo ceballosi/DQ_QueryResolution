@@ -12,10 +12,11 @@ GET         /listGmcs              controllers.DqController.listGmcs
 GET         /listOrigins           controllers.DqController.listOrigins
 GET         /listPriorities        controllers.DqController.listPriorities
 
-GET         /export                controllers.DqController.export
+GET         /export                controllers.DqController.exportFiltered
+GET         /exportSelected        controllers.DqController.exportSelected
 GET         /send                  controllers.DqController.sendNotifications
 GET         /report                controllers.DqController.report
-GET         /exportReport         controllers.DqController.exportReport
+GET         /exportReport          controllers.DqController.exportReport
 POST        /upload                controllers.DqController.upload
 POST        /changeStatus          controllers.DqController.changeStatus
 POST        /querychain            controllers.DqController.queryChain
